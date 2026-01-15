@@ -1,0 +1,165 @@
+import os
+from pathlib import Path
+
+import numpy as np
+import soundfile as sf
+import librosa
+import matplotlib.pyplot as plt
+
+
+# --------- 基本工具 ---------
+
+def _load_wav(path, target_sr=16000):
+    path = str(path)
+    y, sr = sf.read(path)
+    if y.ndim > 1:
+        y = np.mean(y, axis=1)
+    if sr != target_sr:
+        y = librosa.resample(y, orig_sr=sr, target_sr=target_sr)
+        sr = target_sr
+    return y, sr
+
+
+def _ensure_dir(d):
+    d = Path(d)
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+# --------- 各种图 ---------
+
+def plot_waveform(y, sr, out_path, title_prefix):
+    t = np.linspace(0, len(y) / sr, num=len(y))
+    plt.figure(figsize=(6, 4))
+    plt.plot(t, y)
+    plt.title(f"{title_prefix} - Waveform")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Amplitude")
+    plt.tight_layout()
+    plt.savefig(out_path)
+    plt.close()
+
+
+def plot_mel(y, sr, out_path, title_prefix):
+    S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=1024, hop_length=256, n_mels=128)
+    S_db = librosa.power_to_db(S, ref=np.max)
+    plt.figure(figsize=(6, 4))
+    librosa.display.specshow(S_db, sr=sr, hop_length=256, x_axis="time", y_axis="mel")
+    plt.title(f"{title_prefix} - Mel Spectrogram")
+    plt.colorbar(format="%.1f dB")
+    plt.tight_layout()
+    plt.savefig(out_path)
+    plt.close()
+
+
+def plot_cqt(y, sr, out_path, title_prefix):
+    C = librosa.cqt(y, sr=sr, hop_length=256)
+    C_db = librosa.amplitude_to_db(np.abs(C), ref=np.max)
+    plt.figure(figsize=(6, 4))
+    librosa.display.specshow(C_db, sr=sr, hop_length=256, x_axis="time", y_axis="cqt_hz")
+    plt.title(f"{title_prefix} - CQT")
+    plt.colorbar(format="%.1f dB")
+    plt.tight_layout()
+    plt.savefig(out_path)
+    plt.close()
+
+
+def plot_chroma(y, sr, out_path, title_prefix):
+    C = librosa.feature.chroma_cqt(y=y, sr=sr)
+    plt.figure(figsize=(6, 4))
+    librosa.display.specshow(C, y_axis="chroma", x_axis="time")
+    plt.title(f"{title_prefix} - Chroma")
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(out_path)
+    plt.close()
+
+
+def plot_f0(y, sr, out_path, title_prefix):
+    f0, _, _ = librosa.pyin(
+        y,
+        fmin=librosa.note_to_hz("C2"),
+        fmax=librosa.note_to_hz("C7"),
+        sr=sr,
+    )
+    t = np.linspace(0, len(y) / sr, num=len(f0))
+    plt.figure(figsize=(6, 4))
+    plt.plot(t, f0)
+    plt.title(f"{title_prefix} - F0 (librosa.pyin)")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Frequency (Hz)")
+    plt.tight_layout()
+    plt.savefig(out_path)
+    plt.close()
+
+
+def plot_stft(y, sr, out_path, title_prefix):
+    D = librosa.stft(y, n_fft=1024, hop_length=256)
+    D_db = librosa.amplitude_to_db(np.abs(D), ref=np.max)
+    plt.figure(figsize=(6, 4))
+    librosa.display.specshow(D_db, sr=sr, hop_length=256, x_axis="time", y_axis="linear")
+    plt.title(f"{title_prefix} - STFT")
+    plt.colorbar(format="%.1f dB")
+    plt.tight_layout()
+    plt.savefig(out_path)
+    plt.close()
+
+
+def plot_mps(y, sr, out_path, title_prefix):
+    """
+    Modulation Power Spectrum (MPS) 简易实现：
+    1) 计算功率谱 S(f, t)
+    2) 对 S 做 2D FFT 得到调制频谱
+    """
+    # 先做 STFT 得到功率谱
+    D = librosa.stft(y, n_fft=1024, hop_length=256)
+    S = np.abs(D) ** 2  # [freq, time]
+
+    # 2D FFT -> 调制频谱，做对数幅度
+    M = np.fft.fftshift(np.fft.fft2(S))
+    M_db = 10 * np.log10(np.abs(M) + 1e-8)
+
+    plt.figure(figsize=(6, 4))
+    plt.imshow(M_db, aspect="auto", origin="lower")
+    plt.title(f"{title_prefix} - MPS")
+    plt.xlabel("Modulation (time)")
+    plt.ylabel("Modulation (freq)")
+    plt.colorbar(format="%.1f dB")
+    plt.tight_layout()
+    plt.savefig(out_path)
+    plt.close()
+
+
+# --------- 总入口：生成 7 张图 ---------
+
+def save_all_views(wav_path, out_dir, prefix):
+    """
+    wav_path: 该 case 下的 *.wav 文件路径 (raw.wav / adv.wav / noise.wav / gen.wav / ungen.wav)
+    out_dir:  该类型图像的目录，例如 .../case_0/fig_raw
+    prefix:   'raw' / 'adv' / 'noise' / 'gen' / 'ungen'
+    """
+    out_dir = _ensure_dir(out_dir)
+    y, sr = _load_wav(wav_path)
+
+    base = out_dir / f"{prefix}"
+
+    # 1. 波形
+    plot_waveform(y, sr, base.with_name(f"{prefix}_wave.png"), prefix)
+
+    # 2. Mel
+    plot_mel(y, sr, base.with_name(f"{prefix}_mel.png"), prefix)
+
+    # 3. CQT
+    plot_cqt(y, sr, base.with_name(f"{prefix}_cqt.png"), prefix)
+
+    # 4. Chroma
+    plot_chroma(y, sr, base.with_name(f"{prefix}_chroma.png"), prefix)
+
+    # 5. F0
+    plot_f0(y, sr, base.with_name(f"{prefix}_f0.png"), prefix)
+
+    # 6. STFT
+    plot_stft(y, sr, base.with_name(f"{prefix}_stft.png"), prefix)
+
+    # 7. MPS
+    plot_mps(y, sr, base.with_name(f"{prefix}_mps.png"), prefix)
