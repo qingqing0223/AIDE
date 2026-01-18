@@ -9,8 +9,9 @@ It includes: (i) prompt-aware input perturbation, (ii) a lightweight Prompt Safe
 ---
 
 <p align="center">
-  <img src="assets/framework.png" alt="Overview of the PAI-TTA Framework" width="900">
+  <img src="./assets/framework_crop.png" width="900">
 </p>
+
 
 
 ---
