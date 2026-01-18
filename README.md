@@ -1,4 +1,4 @@
-# PAI-TTA (speech_guard_core)
+# PAI-TTA: Prompt-Aware Audio Immunization Against Harmful Prompting in Text-to-Audio Diffusion
 
 📌 Anonymous code release for double-blind review.
 
