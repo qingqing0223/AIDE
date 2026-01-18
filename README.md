@@ -5,13 +5,13 @@
 This repository provides the core implementation of PAI-TTA, a prompt-aware safety framework for text-to-audio diffusion models.
 It includes: (i) prompt-aware input perturbation, (ii) a lightweight Prompt Safety Module (PSM), and (iii) evaluation scripts.
 
-> Note: Datasets / checkpoints / generated audios / logs / experimental results are NOT included.
 
 ---
 
 <p align="center">
-  <img src="assets/framework.png" width="900">
+  <img src="assets/framework.png" alt="Overview of the PAI-TTA Framework" width="900">
 </p>
+
 
 ---
 
@@ -45,7 +45,7 @@ PAI-TTA/
 
 ## 🛠️ Environment Setup
 
-We recommend using **Conda** to manage the environment.
+We recommend using Conda to manage the environment.
 
 > Note (Anonymous Release): This repo contains the core code. Large checkpoints / datasets are not included.
 
