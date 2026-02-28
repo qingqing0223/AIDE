@@ -9,7 +9,7 @@ It includes: (i) prompt-aware input perturbation, (ii) a lightweight Prompt Safe
 ---
 
 <p align="center">
-  <img src="./assets/framework_crop.png" width="900">
+  <img src="https://raw.githubusercontent.com/qingqing0223/AIDE/main/assets/framework_crop.png" width="900" />
 </p>
 
 
