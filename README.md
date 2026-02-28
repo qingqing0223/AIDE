@@ -45,6 +45,7 @@ AIDE/
 ├── tools/                  # Auxiliary tools
 └── assets/                 # Figures used in README
 
+---
 ## 🛠️ Environment Setup
 
 We recommend using Conda to manage the environment.
@@ -60,32 +61,32 @@ pip install transformers sentencepiece
 3) Quick sanity check
 python -c "import torch; print('torch:', torch.__version__, 'cuda:', torch.cuda.is_available())"
 python -c "import librosa, soundfile; print('audio libs ok')"
-
+---
 ## 💾 Data Preparation
 
 This repository does NOT provide datasets, checkpoints, or generated results.
 Typical evaluation datasets:
 ·AudioCaps (environmental audio captioning benchmark)
 ·VCTK (multi-speaker speech corpus)
-
+---
 ## 🚀 Training
 
 AIDE typically follows a two-stage protocol:
 ·Trainaudio immunization (generate perturbations / immunized latents)
 ·Train PSM (prompt classifier + continuous gate calibration)
-
+---
 ## 🧪 Inference and Evaluation
 ·Run guarded pipeline
 · Batch / multi-prompt runs
 · Offline evaluation
 |Outputs (generated audio / caches / logs / metrics tables) are NOT included in this repo.
-
+---
 ## 🔒 Anonymity Notes
 This repository is intended for double-blind review:
 No author names, institutions, emails, or personal links are included.
 Please avoid committing logs, absolute paths, or any identifying metadata.
 > Note (Anonymous Release): This repo contains the core code. Large checkpoints / datasets are not included.
-
+---
 ## 🙏 Credits
 This anonymous implementation is built upon and inspired by prior open-source work in:
 text-to-audio diffusion (AudioLDM-style pipelines)
@@ -93,7 +94,7 @@ contrastive audio-text encoders (CLAP-style)
 adversarial audio perturbations and perceptual constraints
 prompt safety classification and continual learning techniques
 We thank the original authors and open-source contributors for releasing their code and models.
-
+---
 ## 📌 Citation
 @inproceedings{aide2026,
   title     = {Audio Immunization Against Harmful Audio Editing with Diffusion Models},
