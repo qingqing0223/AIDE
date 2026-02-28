@@ -44,7 +44,7 @@ AIDE/
 ├── psm/                    # Prompt Safety Module (PSM)
 ├── tools/                  # Auxiliary tools
 └── assets/                 # Figures used in README
-
+```
 ---
 ## 🛠️ Environment Setup
 
