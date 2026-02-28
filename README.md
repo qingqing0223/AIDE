@@ -45,7 +45,6 @@ AIDE/
 ├── tools/                  # Auxiliary tools
 └── assets/                 # Figures used in README
 ```
----
 ## 🛠️ Environment Setup
 
 We recommend using Conda to manage the environment.
@@ -62,7 +61,6 @@ pip install transformers sentencepiece
 python -c "import torch; print('torch:', torch.__version__, 'cuda:', torch.cuda.is_available())"
 python -c "import librosa, soundfile; print('audio libs ok')"
 
----
 ## 💾 Data Preparation
 
 This repository does NOT provide datasets, checkpoints, or generated results.
@@ -70,7 +68,6 @@ Typical evaluation datasets:
 ·AudioCaps (environmental audio captioning benchmark)
 ·VCTK (multi-speaker speech corpus)
 
----
 
 ## 🚀 Training
 
@@ -78,7 +75,6 @@ AIDE typically follows a two-stage protocol:
 ·Trainaudio immunization (generate perturbations / immunized latents)
 ·Train PSM (prompt classifier + continuous gate calibration)
 
----
 
 ## 🧪 Inference and Evaluation
 
@@ -106,7 +102,7 @@ contrastive audio-text encoders (CLAP-style)
 adversarial audio perturbations and perceptual constraints
 prompt safety classification and continual learning techniques
 We thank the original authors and open-source contributors for releasing their code and models.
----
+
 
 ## 📌 Citation
 
