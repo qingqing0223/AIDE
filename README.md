@@ -92,7 +92,6 @@ No author names, institutions, emails, or personal links are included.
 Please avoid committing logs, absolute paths, or any identifying metadata.
 > Note (Anonymous Release): This repo contains the core code. Large checkpoints / datasets are not included.
 
----
 
 ## 🙏 Credits
 
