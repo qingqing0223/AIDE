@@ -105,14 +105,9 @@ We thank the original authors and open-source contributors for releasing their c
 
 ## 📌 Citation
 
-@inproceedings{aide2026,
-
-  title     = {Audio Immunization Against Harmful Audio Editing with Diffusion Models},
-  
-  author    = {Anonymous Authors},
-  
-  booktitle = {Anonymous Submission},
-  
-  year      = {2026}
-  
+@inproceedings{aide2026, 
+  title     = {Audio Immunization Against Harmful Audio Editing with Diffusion Models},   
+  author    = {Anonymous Authors},   
+  booktitle = {Anonymous Submission},   
+  year      = {2026}   
 }
