@@ -204,7 +204,14 @@ class PSMTrainer:
             result["new_class_mean_f1"] = float(np.mean(per_class[self.old_num_labels:])) if len(per_class) > self.old_num_labels else None
         return result
 
-    def fit(self, train_jsonl: str | Path, dev_jsonl: str | Path, epochs: int = 10, batch_size: int = 4):
+    def fit(
+        self, train_jsonl: str | Path, dev_jsonl: str | Path,
+        epochs: int = 10, batch_size: int = 4, max_steps: int | None = None
+    ):
+        if max_steps is not None and int(max_steps) < 1:
+            raise ValueError("max_steps must be a positive integer.")
+        start_global_step = self.global_step
+        stop_training = False
         train_ds = PromptDataset(train_jsonl, self.latent_dir, self.seed)
         dev_ds = PromptDataset(dev_jsonl, self.latent_dir, self.seed + 1)
         tokenizer = self.model.tokenizer
@@ -244,6 +251,7 @@ class PSMTrainer:
             "audio_checkpoint": self.backend.checkpoint_path if self.backend is not None else None,
             "audio_checkpoint_sha256": self.backend.checkpoint_sha256 if self.backend is not None else None,
             "seed": self.seed,
+            "max_steps_this_run": max_steps,
         }
         (self.output_dir / "trainer_config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
         for epoch in range(1, int(epochs) + 1):
@@ -287,6 +295,9 @@ class PSMTrainer:
                     "l_total": float(total.detach().cpu()),
                     **gen_info,
                 })
+                if max_steps is not None and self.global_step - start_global_step >= int(max_steps):
+                    stop_training = True
+                    break
 
             with step_path.open("a", encoding="utf-8") as stream:
                 for row in epoch_rows:
@@ -329,6 +340,8 @@ class PSMTrainer:
                 }
                 torch.save(inference_checkpoint, self.output_dir / "best_inference.pt")
             print(json.dumps(summary, ensure_ascii=False))
+            if stop_training:
+                break
 
         if self.owm is not None:
             self.owm.close()
