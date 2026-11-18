@@ -190,8 +190,11 @@ class PSMTrainer:
         )
         result = {
             "accuracy": float(accuracy_score(labels, predictions)),
-            "macro_f1": float(f1_score(labels, predictions, average="macro", zero_division=0)),
-            "weighted_f1": float(f1_score(labels, predictions, average="weighted", zero_division=0)),
+            "macro_f1": float(np.mean(per_class)),
+            "weighted_f1": float(f1_score(
+                labels, predictions, labels=list(range(self.model.classifier.out_features)),
+                average="weighted", zero_division=0
+            )),
             "per_class_f1": [float(value) for value in per_class],
             "gate_benign_mean": float(np.mean([g for g, h in zip(gates, harmful) if h < 0.5])) if any(h < 0.5 for h in harmful) else None,
             "gate_harmful_mean": float(np.mean([g for g, h in zip(gates, harmful) if h >= 0.5])) if any(h >= 0.5 for h in harmful) else None,
