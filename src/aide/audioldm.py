@@ -28,7 +28,14 @@ class AudioLDMAdapter:
         basis=librosa.filters.mel(sr=16000,n_fft=1024,n_mels=64,fmin=0,fmax=8000)
         self.mel_basis=torch.from_numpy(basis).float().to(self.device)
 
+    def normalize_input(self,wav):
+        x=wav.float()
+        x=x-x.mean(dim=-1,keepdim=True)
+        x=x/(x.abs().amax(dim=-1,keepdim=True)+1e-8)
+        return 0.5*x
+
     def differentiable_fbank(self,wav):
+        wav=self.normalize_input(wav)
         x=wav.squeeze(1) if wav.dim()==3 else wav
         window=torch.hann_window(1024,device=x.device,dtype=x.dtype)
         spec=torch.stft(x,n_fft=1024,hop_length=160,win_length=1024,window=window,
@@ -49,7 +56,8 @@ class AudioLDMAdapter:
     def audio_condition(self,wav):
         self.model.cond_stage_model.embed_mode="audio"
         self.model.cond_stage_model.unconditional_prob=0.0
-        x=wav.to(self.device); x=x.squeeze(1) if x.dim()==3 else x
+        x=self.normalize_input(wav.to(self.device))
+        x=x.squeeze(1) if x.dim()==3 else x
         return self.model.cond_stage_model(x)
 
     @torch.no_grad()
