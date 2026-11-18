@@ -2,6 +2,12 @@
 
 📌 Anonymous code release for double-blind review.
 
+## Complete reproducibility pipeline
+
+The paper-aligned reconstruction is maintained in the independent branch **rebuild/aide-full-pipeline-v2**, under the new folder **repro_v2/**. Start with [repro_v2/README.md](repro_v2/README.md) for the pinned AudioLDM adapter, end-to-end commands, interface checks, metrics and ablations.
+
+The historical top-level scripts are preserved for traceability. They are not the canonical entry points for the reconstructed pipeline. The new implementation does not overwrite the historical source files.
+
 This repository provides the core implementation of AIDE, a prompt-aware safety framework for text-to-audio diffusion models.
 It includes: (i) prompt-aware input perturbation, (ii) a lightweight Prompt Safety Module (PSM), and (iii) evaluation scripts.
 
