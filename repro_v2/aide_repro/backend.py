@@ -38,6 +38,8 @@ class AudioLDMBackend:
         self.model_name = model_name
         self.model = build_model(ckpt_path=checkpoint, model_name=model_name)
         self.model = self.model.to(self.device).eval()
+        if getattr(self.model, "parameterization", "eps") != "eps":
+            raise RuntimeError("The differentiable DDIM adapter currently requires epsilon parameterization.")
         for parameter in self.model.parameters():
             parameter.requires_grad_(False)
 
@@ -49,6 +51,7 @@ class AudioLDMBackend:
         self.n_fft = int(pre["stft"]["filter_length"])
         self.win_length = int(pre["stft"]["win_length"])
         self.n_mels = int(pre["mel"]["n_mel_channels"])
+        self.latent_channels = int(config["model"]["params"]["first_stage_config"]["params"]["embed_dim"])
         self.mel_fmin = float(pre["mel"]["mel_fmin"])
         self.mel_fmax = float(pre["mel"]["mel_fmax"])
 
@@ -105,6 +108,11 @@ class AudioLDMBackend:
         fbank = self.waveform_to_fbank(waveform)
         posterior = self.model.first_stage_model.encode(fbank)
         latent = posterior.mode() if hasattr(posterior, "mode") else posterior
+        if latent.ndim != 4 or latent.shape[1] != self.latent_channels:
+            raise RuntimeError(
+                f"Unexpected AudioLDM VAE latent shape {tuple(latent.shape)}; "
+                f"expected channel dimension {self.latent_channels}."
+            )
         return latent * self.model.scale_factor
 
     def decode_latent(self, latent: torch.Tensor) -> torch.Tensor:
