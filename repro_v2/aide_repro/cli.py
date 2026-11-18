@@ -115,6 +115,7 @@ def cmd_train_psm(args):
         disable_generation_loss=args.no_generation_loss,
         disable_channel_gate=args.disable_channel_gate,
         binary_risk=args.binary_risk, seed=args.seed,
+        owm_state=resume.get("owm_state") if resume else None,
     )
     result = trainer.fit(args.train_jsonl, args.dev_jsonl, epochs=args.epochs, batch_size=args.batch_size)
     print(json.dumps(result, indent=2))
