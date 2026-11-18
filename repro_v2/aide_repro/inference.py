@@ -118,6 +118,8 @@ def infer_one(
         "psm_checkpoint": str(Path(psm_checkpoint_path).resolve()) if psm_checkpoint_path else None,
         "psm_checkpoint_sha256": sha256_file(psm_checkpoint_path) if psm_checkpoint_path else None,
         "audio_model": backend.model_name,
+        "audio_checkpoint": backend.checkpoint_path,
+        "audio_checkpoint_sha256": backend.checkpoint_sha256,
         "sample_rate": backend.sample_rate,
         "latent_shape": list(z_clean.shape),
         "prompt": prompt,
