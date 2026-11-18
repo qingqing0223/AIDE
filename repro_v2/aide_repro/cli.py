@@ -92,6 +92,7 @@ def cmd_train_psm(args):
     resume = torch.load(args.resume, map_location="cpu") if args.resume else None
     if resume:
         num_labels = int(resume["num_labels"])
+        label_names = list(resume.get("label_names", [f"class_{i}" for i in range(num_labels)]))
         if args.binary_risk and num_labels != 2:
             raise ValueError("A binary-risk run cannot resume a multi-class checkpoint. Start a new binary checkpoint.")
         text_model = str(resume["text_model"])
@@ -100,6 +101,15 @@ def cmd_train_psm(args):
         num_labels = 2 if args.binary_risk else int(args.num_labels)
         text_model = args.text_model
         latent_channels = int(args.latent_channels)
+        if args.binary_risk:
+            label_names = ["benign", "harmful"]
+        else:
+            label_map_path = Path(args.train_jsonl).parent / "label_map.json"
+            if label_map_path.exists():
+                mapping = json.loads(label_map_path.read_text(encoding="utf-8"))
+                label_names = [mapping["id2label"].get(str(i), f"class_{i}") for i in range(num_labels)]
+            else:
+                label_names = [f"class_{i}" for i in range(num_labels)]
     model = PSMModel(
         num_labels=num_labels, latent_channels=latent_channels,
         text_model=text_model, local_files_only=args.local_files_only,
@@ -110,6 +120,7 @@ def cmd_train_psm(args):
     expanded = bool(args.expand_to and args.expand_to > model.classifier.out_features)
     if expanded:
         model.expand_classifier(args.expand_to)
+        label_names.extend([f"new_harmful_{i}" for i in range(len(label_names), args.expand_to)])
 
     backend = None if args.no_generation_loss else backend_from_args(args)
     trainer = PSMTrainer(
@@ -129,6 +140,7 @@ def cmd_train_psm(args):
         initial_global_step=resume.get("global_step", 0) if resume else 0,
         freeze_backbone=args.freeze_backbone or bool(expanded and args.owm),
         old_num_labels=old_num_labels if expanded else None,
+        label_names=label_names,
     )
     result = trainer.fit(args.train_jsonl, args.dev_jsonl, epochs=args.epochs, batch_size=args.batch_size)
     print(json.dumps(result, indent=2))
@@ -145,6 +157,7 @@ def cmd_infer(args):
         hard_gate=args.hard_gate, disable_channel_gate=args.disable_channel_gate,
         save_paired=not args.no_paired, local_files_only=args.local_files_only,
         psm_checkpoint_path=args.psm_checkpoint,
+        label_names=_.get("label_names") if False else None,
     )
     print(json.dumps(result, indent=2))
 
