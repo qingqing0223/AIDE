@@ -2,14 +2,16 @@ seed: 2026
 device: cuda
 audio:
   sample_rate: 16000
-  input_scale: 0.5
   target_length: 160000
 audioldm:
   model_name: audioldm-s-full
   checkpoint: null
+  clap_sample_rate: 48000
+  clap_max_samples: 480000
   ddim_steps: 50
-  guidance_scale: 2.5
+  guidance_scale: 1.0
 immunization:
+  # epsilon=0.01 is explicit in the paper.
   epsilon: 0.01
   alpha: 0.001
   steps: 40
@@ -27,14 +29,17 @@ psm:
   max_length: 128
   lr: 2.0e-5
   epochs: 10
-  batch_size: 32
+  batch_size: 1
   weight_decay: 0.01
   mu_benign: 1.0
   mu_harmful: 1.0
-  mu_channel: 0.05
+  lambda_g: 1.0
+  lambda_r: 1.0
+  generation_coupled: true
+  generation_steps: 10
 generation:
   seed: 42
-  gate_mode: all
+  eta: 0.0
 evaluation:
   sample_rate: 16000
   gamma: 0.8
