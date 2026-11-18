@@ -57,3 +57,21 @@ def test_owm_projection_updates_and_projects():
     projector.update()
     assert torch.isfinite(projector.projections["fc"]).all()
     projector.close()
+
+
+def test_latent_fusion_eq4_endpoints_and_shape_guard():
+    from aide_repro.losses import fuse_latents
+
+    clean = torch.zeros(2, 8, 4, 3)
+    protected = torch.ones_like(clean)
+    scalar_zero = torch.zeros(2)
+    channel_one = torch.ones(2, 8)
+    assert torch.equal(fuse_latents(clean, protected, scalar_zero, channel_one), clean)
+    scalar_one = torch.ones(2)
+    assert torch.equal(fuse_latents(clean, protected, scalar_one, channel_one), protected)
+    try:
+        fuse_latents(clean, protected, scalar_one, torch.ones(2, 7))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Channel mismatch should fail loudly")
