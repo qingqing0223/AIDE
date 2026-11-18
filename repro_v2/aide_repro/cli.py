@@ -149,7 +149,7 @@ def cmd_train_psm(args):
 def cmd_infer(args):
     set_seed(args.seed)
     backend = backend_from_args(args)
-    psm, _ = load_psm_checkpoint(args.psm_checkpoint, backend.device, args.local_files_only)
+    psm, checkpoint = load_psm_checkpoint(args.psm_checkpoint, backend.device, args.local_files_only)
     result = infer_one(
         backend, psm, args.audio, args.delta, args.prompt, args.output,
         duration_seconds=args.duration, ddim_steps=args.ddim_steps, t_start=args.t_start,
@@ -157,7 +157,7 @@ def cmd_infer(args):
         hard_gate=args.hard_gate, disable_channel_gate=args.disable_channel_gate,
         save_paired=not args.no_paired, local_files_only=args.local_files_only,
         psm_checkpoint_path=args.psm_checkpoint,
-        label_names=_.get("label_names") if False else None,
+        label_names=checkpoint.get("label_names"),
     )
     print(json.dumps(result, indent=2))
 
