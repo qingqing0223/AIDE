@@ -96,6 +96,7 @@ class PSMTrainer:
         optimizer_state: dict | None = None,
         initial_global_step: int = 0,
         freeze_backbone: bool = False,
+        old_num_labels: int | None = None,
     ):
         self.model = model
         self.backend = backend
@@ -110,6 +111,7 @@ class PSMTrainer:
                 f"AudioLDM latent_channels={backend.latent_channels}"
             )
         self.freeze_backbone = bool(freeze_backbone)
+        self.old_num_labels = int(old_num_labels) if old_num_labels is not None else None
         if self.freeze_backbone:
             for parameter in self.model.backbone.parameters():
                 parameter.requires_grad_(False)
@@ -178,13 +180,22 @@ class PSMTrainer:
             harmful.extend(h.cpu().tolist())
         if self.owm is not None:
             self.owm.clear_inputs()
-        return {
+        per_class = f1_score(
+            labels, predictions, labels=list(range(self.model.classifier.out_features)),
+            average=None, zero_division=0
+        )
+        result = {
             "accuracy": float(accuracy_score(labels, predictions)),
             "macro_f1": float(f1_score(labels, predictions, average="macro", zero_division=0)),
             "weighted_f1": float(f1_score(labels, predictions, average="weighted", zero_division=0)),
+            "per_class_f1": [float(value) for value in per_class],
             "gate_benign_mean": float(np.mean([g for g, h in zip(gates, harmful) if h < 0.5])) if any(h < 0.5 for h in harmful) else None,
             "gate_harmful_mean": float(np.mean([g for g, h in zip(gates, harmful) if h >= 0.5])) if any(h >= 0.5 for h in harmful) else None,
         }
+        if self.old_num_labels is not None:
+            result["old_class_mean_f1"] = float(np.mean(per_class[:self.old_num_labels]))
+            result["new_class_mean_f1"] = float(np.mean(per_class[self.old_num_labels:])) if len(per_class) > self.old_num_labels else None
+        return result
 
     def fit(self, train_jsonl: str | Path, dev_jsonl: str | Path, epochs: int = 10, batch_size: int = 4):
         train_ds = PromptDataset(train_jsonl, self.latent_dir, self.seed)
@@ -216,6 +227,7 @@ class PSMTrainer:
             "disable_channel_gate": self.disable_channel_gate,
             "binary_risk": self.binary_risk,
             "freeze_backbone": self.freeze_backbone,
+            "old_num_labels": self.old_num_labels,
             "use_owm": self.owm is not None,
             "num_labels": self.model.classifier.out_features,
             "latent_channels": self.model.latent_channels,
@@ -287,6 +299,7 @@ class PSMTrainer:
                 "binary_risk": self.binary_risk,
                 "owm_enabled": self.owm is not None,
                 "backbone_frozen": self.freeze_backbone,
+                "old_num_labels": self.old_num_labels,
                 "owm_state": self.owm.state_dict() if self.owm is not None else None,
                 "optimizer_state": self.optimizer.state_dict(),
             }
