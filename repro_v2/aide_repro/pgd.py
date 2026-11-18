@@ -130,6 +130,7 @@ class LatentPGD:
         history_rows = []
         run_config = {
             "seed": self.seed,
+            "audio_model": self.backend.model_name,
             "epsilon": self.epsilon,
             "step_size": self.step_size,
             "steps": self.steps,
@@ -177,10 +178,6 @@ class LatentPGD:
         write_jsonl(out / "pgd_history.jsonl", history_rows)
         write_jsonl(out / "target_manifest.jsonl", target_rows)
         (out / "run_config.json").write_text(json.dumps(run_config, indent=2), encoding="utf-8")
-        hashes = {}
-        for artifact in sorted(p for p in out.rglob("*") if p.is_file()):
-            hashes[str(artifact.relative_to(out))] = sha256_file(artifact)
-        (out / "artifacts_sha256.json").write_text(json.dumps(hashes, indent=2), encoding="utf-8")
         summary = {"num_samples": len(metric_rows), "output_dir": str(out.resolve()),
                    "metrics": {
                        "snr_db_mean": sum(x["snr_db"] for x in metric_rows) / max(1, len(metric_rows)),
@@ -188,4 +185,8 @@ class LatentPGD:
                        "linf_max": max((x["linf"] for x in metric_rows), default=0.0),
                    }}
         (out / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        hashes = {}
+        for artifact in sorted(p for p in out.rglob("*") if p.is_file() and p.name != "artifacts_sha256.json"):
+            hashes[str(artifact.relative_to(out))] = sha256_file(artifact)
+        (out / "artifacts_sha256.json").write_text(json.dumps(hashes, indent=2), encoding="utf-8")
         return summary
