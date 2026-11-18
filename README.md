@@ -30,9 +30,13 @@ Raw AudioCaps/VCTK audio and large model checkpoints are not committed to GitHub
 ## Quick start
 ```bash
 pip install -r requirements.txt
+pip install -r requirements-audioldm.txt
 pip install -e .
 python scripts/check_environment.py
 pytest -q
+
+# optional FD/IS/KL evaluation
+pip install -r requirements-eval.txt
 ```
 
 The first GPU pass should validate the AudioLDM checkpoint, differentiable first-stage encoder, PSM condition shape and DDIM loop before launching the full experiment grid.
