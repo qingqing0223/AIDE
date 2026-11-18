@@ -18,6 +18,10 @@ The paper does not disclose the exact psychoacoustic threshold estimator, the co
 - configs/taxonomy.json deliberately leaves source-label maps empty. Fill them from the exact AART and RED-INSTRUCT releases. Unknown labels fail loudly; they are never silently merged into one class.
 - The source-latent path follows the official AudioLDM style-transfer route: VAE-encode source audio, apply the DDIM forward-noising equation, then decode with text-conditioned DDIM. Eq. (4) is applied to the VAE latent before forward noising and reverse denoising. This is a concrete implementation choice for the paper's unspecified injection point.
 - Generation-coupled PSM training uses a short deterministic DDIM trajectory by default (8 steps, t_start=4) for memory/runtime control. Final evaluation uses the configured full inference schedule. Record both settings in every experiment.
+- Latent steering/separation use mean-reduced squared distances for stable optimization. The paper writes squared L2 norms but does not specify the reduction convention.
+- The paper does not publish all gate-loss weights. The implementation defaults lambda_gate, lambda_generation, mu_benign and mu_harmful to 1.0; tune only through documented validation/ablation.
+- The channel gate is implemented as one value per VAE channel (8 for the selected checkpoint), broadcast across latent time/frequency positions. This is the concrete channel-wise interface used by the code.
+- OWM uses an RLS-style projection update on the PSM shared/head layers with ridge=1 and at most 128 captured activation rows per module update. On classifier expansion with OWM, the RoBERTa backbone is frozen to keep the incremental path bounded in memory.
 - The AudioLDM VAE mel frontend is reimplemented with differentiable torch operations and upstream AudioLDM mel/STFT settings. Validate latent shapes and reconstruction before large-scale runs.
 
 Do not describe an engineering proxy or an unverified run as an original paper implementation/result.
