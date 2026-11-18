@@ -62,7 +62,8 @@ def load_audio(
     target_frames = int(round(duration_seconds * 102.4))
     waveform = fit_length(waveform, target_frames * 160)
     if normalize:
-        waveform = normalize_waveform(waveform)
+        peak = waveform.abs().amax(dim=-1, keepdim=True).clamp_min(1e-8)
+        waveform = (waveform / peak * 0.5).clamp(-0.5, 0.5)
     if not torch.isfinite(waveform).all():
         raise ValueError(f"Non-finite audio values in {path}")
     return waveform
