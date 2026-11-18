@@ -120,6 +120,14 @@ class LatentPGD:
     ) -> dict:
         manifest = [json.loads(line) for line in Path(manifest_jsonl).read_text(encoding="utf-8").splitlines() if line.strip()]
         targets = list_audio_files(target_root)
+        source_hashes = {row.get("sha256") for row in manifest if row.get("sha256")}
+        target_hashes = {str(path): sha256_file(path) for path in targets}
+        overlap = source_hashes.intersection(target_hashes.values())
+        if overlap:
+            raise ValueError(
+                f"Target pool overlaps source manifest in {len(overlap)} identical audio files. "
+                "Use a disjoint target pool for a valid steering experiment."
+            )
         if sample_limit:
             manifest = manifest[:sample_limit]
         out = Path(output_dir)
@@ -162,7 +170,7 @@ class LatentPGD:
                 "audio_id": audio_id,
                 "source_sha256": row.get("sha256"),
                 "target_path": str(target_path.resolve()),
-                "target_sha256": sha256_file(target_path),
+                "target_sha256": target_hashes[str(target_path)],
                 **{k: v for k, v in result["metrics"].items() if k != "history"},
             }
             metric_rows.append(metrics)
