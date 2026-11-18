@@ -87,6 +87,8 @@ def cmd_train_psm(args):
     resume = torch.load(args.resume, map_location="cpu") if args.resume else None
     if resume:
         num_labels = int(resume["num_labels"])
+        if args.binary_risk and num_labels != 2:
+            raise ValueError("A binary-risk run cannot resume a multi-class checkpoint. Start a new binary checkpoint.")
         text_model = str(resume["text_model"])
         latent_channels = int(resume["latent_channels"])
     else:
@@ -99,7 +101,8 @@ def cmd_train_psm(args):
     )
     if resume:
         model.load_state_dict(resume["state_dict"], strict=True)
-    if args.expand_to and args.expand_to > model.classifier.out_features:
+    expanded = bool(args.expand_to and args.expand_to > model.classifier.out_features)
+    if expanded:
         model.expand_classifier(args.expand_to)
 
     backend = None if args.no_generation_loss else backend_from_args(args)
@@ -116,6 +119,8 @@ def cmd_train_psm(args):
         disable_channel_gate=args.disable_channel_gate,
         binary_risk=args.binary_risk, seed=args.seed,
         owm_state=resume.get("owm_state") if resume else None,
+        optimizer_state=resume.get("optimizer_state") if resume and not expanded else None,
+        initial_global_step=resume.get("global_step", 0) if resume else 0,
     )
     result = trainer.fit(args.train_jsonl, args.dev_jsonl, epochs=args.epochs, batch_size=args.batch_size)
     print(json.dumps(result, indent=2))
