@@ -313,12 +313,24 @@ class PSMTrainer:
             if dev_metrics["macro_f1"] > best_f1:
                 best_f1 = dev_metrics["macro_f1"]
                 torch.save(checkpoint, self.output_dir / "best.pt")
+                inference_checkpoint = {
+                    "state_dict": checkpoint["state_dict"],
+                    "num_labels": checkpoint["num_labels"],
+                    "latent_channels": checkpoint["latent_channels"],
+                    "text_model": checkpoint["text_model"],
+                    "epoch": checkpoint["epoch"],
+                    "metrics": checkpoint["metrics"],
+                    "binary_risk": checkpoint["binary_risk"],
+                    "backbone_frozen": checkpoint["backbone_frozen"],
+                    "label_names": checkpoint["label_names"],
+                }
+                torch.save(inference_checkpoint, self.output_dir / "best_inference.pt")
             print(json.dumps(summary, ensure_ascii=False))
 
         if self.owm is not None:
             self.owm.close()
         hashes = {}
-        for name in ("best.pt", "last.pt"):
+        for name in ("best.pt", "last.pt", "best_inference.pt"):
             path = self.output_dir / name
             if path.exists():
                 hashes[name] = sha256_file(path)
