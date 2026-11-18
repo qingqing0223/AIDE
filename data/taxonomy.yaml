@@ -1,0 +1,10 @@
+num_classes: 7
+classes:
+  0: {name: benign, harmful: false}
+  1: {name: harmful_1, harmful: true}
+  2: {name: harmful_2, harmful: true}
+  3: {name: harmful_3, harmful: true}
+  4: {name: harmful_4, harmful: true}
+  5: {name: harmful_5, harmful: true}
+  6: {name: harmful_6, harmful: true}
+note: The paper specifies six harmful subsets but the retrieved source does not disclose their semantic names.

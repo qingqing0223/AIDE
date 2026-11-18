@@ -1,0 +1,2 @@
+# Official AudioLDM dependency
+git+https://github.com/haoheliu/AudioLDM.git

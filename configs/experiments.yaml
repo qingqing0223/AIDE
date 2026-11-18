@@ -1,0 +1,17 @@
+experiments:
+  main:
+    - clean_audio_condition
+    - pgd_only
+    - aide
+  ablations:
+    - no_target_term
+    - no_clean_separation
+    - no_masking
+    - scalar_gate_only
+    - channel_gate_only
+    - no_psm
+    - no_generation_coupled_psm_loss
+  control_modes:
+    - paper_gate_fusion
+  supplements:
+    - text_plus_residual
