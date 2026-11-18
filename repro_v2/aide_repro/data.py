@@ -203,3 +203,24 @@ def build_prompt_dataset(
     }
     (out / "dataset_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
     return {"counts": {k: len(v) for k, v in splits.items()}, "class_counts": stats}
+
+
+def attach_audio_ids(
+    prompt_jsonl: str | Path,
+    audio_manifest_jsonl: str | Path,
+    output_jsonl: str | Path,
+    seed: int = 2025,
+) -> int:
+    """Deterministically link each evaluation prompt to one protected audio ID."""
+    prompts = [json.loads(line) for line in Path(prompt_jsonl).read_text(encoding="utf-8").splitlines() if line.strip()]
+    audios = [json.loads(line) for line in Path(audio_manifest_jsonl).read_text(encoding="utf-8").splitlines() if line.strip()]
+    audio_ids = sorted(row["audio_id"] for row in audios)
+    if not audio_ids:
+        raise ValueError("Audio manifest is empty.")
+    for row in prompts:
+        if not row.get("audio_id"):
+            digest = hashlib.sha256((_norm_text(row["text"]) + str(seed)).encode("utf-8")).hexdigest()
+            row["audio_id"] = audio_ids[int(digest[:12], 16) % len(audio_ids)]
+        row.setdefault("is_harmful", int(row.get("label_id", 0) > 0))
+    write_jsonl(output_jsonl, prompts)
+    return len(prompts)
