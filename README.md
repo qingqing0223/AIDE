@@ -4,7 +4,7 @@
 
 ## Complete reproducibility pipeline
 
-The paper-aligned reconstruction is maintained in the independent branch **rebuild/aide-full-pipeline-v2**, under the new folder **repro_v2/**. Start with [repro_v2/README.md](repro_v2/README.md) for the pinned AudioLDM adapter, end-to-end commands, interface checks, metrics and ablations.
+The paper-aligned reconstruction is maintained in the independent branch **rebuild/aide-full-pipeline-v2**, under the new folder **repro_v2/**. Start with [repro_v2/README.md](repro_v2/README.md) for the pipeline, and see [repro_v2/DATA_AND_ENVIRONMENT.md](repro_v2/DATA_AND_ENVIRONMENT.md) for dataset sources, data layout, preprocessing, model weights, software versions and setup checks.
 
 The historical top-level scripts are preserved for traceability. They are not the canonical entry points for the reconstructed pipeline. The new implementation does not overwrite the historical source files.
 
