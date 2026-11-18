@@ -74,7 +74,7 @@ def save_audio(path: str | Path, waveform: torch.Tensor, sample_rate: int = 1600
     value = waveform.detach().float().cpu()
     if value.ndim == 2:
         value = value[0]
-    sf.write(str(path), value.numpy(), sample_rate, subtype="PCM_16")
+    sf.write(str(path), value.numpy(), sample_rate, subtype="PCM_24")
 
 
 def stft_magnitude(
