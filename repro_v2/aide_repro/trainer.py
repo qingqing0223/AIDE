@@ -91,6 +91,7 @@ class PSMTrainer:
         disable_channel_gate: bool = False,
         binary_risk: bool = False,
         seed: int = 2025,
+        owm_state: dict | None = None,
     ):
         self.model = model
         self.backend = backend
@@ -113,6 +114,8 @@ class PSMTrainer:
         self.seed = int(seed)
         self.optimizer = AdamW(self.model.parameters(), lr=self.learning_rate)
         self.owm = OWMProjector(self.model) if use_owm else None
+        if self.owm is not None and owm_state:
+            self.owm.load_state_dict(owm_state)
         self.global_step = 0
 
     def _forward_generation_loss(self, outputs, batch, z_clean, z_protected):
@@ -235,6 +238,7 @@ class PSMTrainer:
                 "metrics": summary,
                 "binary_risk": self.binary_risk,
                 "owm_enabled": self.owm is not None,
+                "owm_state": self.owm.state_dict() if self.owm is not None else None,
             }
             torch.save(checkpoint, self.output_dir / "last.pt")
             if dev_metrics["macro_f1"] > best_f1:
