@@ -1,0 +1,2 @@
+# Optional generation-evaluation stack
+audioldm-eval>=0.0.3
