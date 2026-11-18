@@ -1,0 +1,40 @@
+seed: 2026
+device: cuda
+audio:
+  sample_rate: 16000
+  input_scale: 0.5
+  target_length: 160000
+audioldm:
+  model_name: audioldm-s-full
+  checkpoint: null
+  ddim_steps: 50
+  guidance_scale: 2.5
+immunization:
+  epsilon: 0.01
+  alpha: 0.001
+  steps: 40
+  lambda_target: 1.0
+  lambda_far: 0.2
+  lambda_mask: 0.1
+  masking_gamma: 0.8
+  target_sampling: random
+  target_pool: data/raw/targets
+psm:
+  backbone: roberta-base
+  num_classes: 7
+  hidden_dim: 256
+  channel_dim: 512
+  max_length: 128
+  lr: 2.0e-5
+  epochs: 10
+  batch_size: 32
+  weight_decay: 0.01
+  mu_benign: 1.0
+  mu_harmful: 1.0
+  mu_channel: 0.05
+generation:
+  seed: 42
+  gate_mode: all
+evaluation:
+  sample_rate: 16000
+  gamma: 0.8
