@@ -53,7 +53,7 @@ fi
 
 "$PYTHON" -m aide_repro.cli attach-audio-ids --prompt-jsonl "$RUN_ROOT/prompts/psm_test.jsonl" --audio-manifest "$RUN_ROOT/test_audio_manifest.jsonl" --output "$RUN_ROOT/prompts/psm_test_with_audio_ids.jsonl"
 if [ -n "$AUDIO_CHECKPOINT" ]; then
-  "$PYTHON" -m aide_repro.cli suite --prompt-jsonl "$RUN_ROOT/prompts/psm_test_with_audio_ids.jsonl" --pgd-audio-dir "$RUN_ROOT/stage1_test/audio" --psm-checkpoint "$RUN_ROOT/stage2_psm/best.pt" --output-dir "$RUN_ROOT/test_suite" --model-name "$MODEL_NAME" --audio-checkpoint "$AUDIO_CHECKPOINT" --ddim-steps 50 --guidance-scale 2.5
+  "$PYTHON" -m aide_repro.cli suite --prompt-jsonl "$RUN_ROOT/prompts/psm_test_with_audio_ids.jsonl" --pgd-audio-dir "$RUN_ROOT/stage1_test/audio" --psm-checkpoint "$RUN_ROOT/stage2_psm/best_inference.pt" --output-dir "$RUN_ROOT/test_suite" --model-name "$MODEL_NAME" --audio-checkpoint "$AUDIO_CHECKPOINT" --ddim-steps 50 --guidance-scale 2.5
   "$PYTHON" -m aide_repro.cli eval-clap --meta-root "$RUN_ROOT/test_suite" --output "$RUN_ROOT/test_suite/clap_metrics.json" --model-name "$MODEL_NAME" --audio-checkpoint "$AUDIO_CHECKPOINT"
 else
   "$PYTHON" -m aide_repro.cli suite --prompt-jsonl "$RUN_ROOT/prompts/psm_test_with_audio_ids.jsonl" --pgd-audio-dir "$RUN_ROOT/stage1_test/audio" --psm-checkpoint "$RUN_ROOT/stage2_psm/best.pt" --output-dir "$RUN_ROOT/test_suite" --model-name "$MODEL_NAME" --ddim-steps 50 --guidance-scale 2.5
