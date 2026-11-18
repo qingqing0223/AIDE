@@ -94,7 +94,7 @@ Before a full run, use sample-limit 1 and inspect the output. Confirm the maximu
 
     python -m aide_repro.cli train-psm --train-jsonl data/prompts/psm_train.jsonl --dev-jsonl data/prompts/psm_dev.jsonl --latent-dir runs/stage1_musan/latents --output-dir runs/stage2_psm --model-name audioldm-s-full-v2 --text-model roberta-base --epochs 10 --batch-size 4 --generation-ddim-steps 8 --generation-t-start 4 --generation-every 1 --owm
 
-The generation-coupled loss is enabled by default. It creates paired clean/gated audio with the same noise tensor, computes AudioLDM CLAP cosine similarities, and backpropagates through the differentiable DDIM loop, VAE decoder, vocoder and CLAP audio branch into the scalar/channel gates. The diffusion/CLAP/VAE/vocoder weights are frozen.
+The generation-coupled loss is enabled by default. It creates paired clean/gated audio with the same noise tensor, computes AudioLDM CLAP cosine similarities, and backpropagates through the differentiable DDIM loop, VAE decoder, vocoder and CLAP audio branch into the scalar/channel gates. The diffusion/CLAP/VAE/vocoder weights are frozen. The run writes best.pt and last.pt as resumable training checkpoints, plus best_inference.pt as a smaller deployment checkpoint without optimizer/OWM state.
 
 If the gradient check reports a missing, zero or non-finite gradient, stop. Do not train PSM or claim Eq. (7) is active until the path passes.
 
