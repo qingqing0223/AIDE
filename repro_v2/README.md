@@ -60,8 +60,8 @@ Provide the fixed target pool explicitly. The code selects one target per source
 
 The paper defines one benign category and six harmful subclasses. The released paper text does not fully enumerate all six class names. Edit configs/taxonomy.json after inspecting the exact dataset versions:
 
-- aart_label_map: exact normalized AART category string to integer ID 1..6.
-- red_file_map: RED-INSTRUCT JSON filename stem to integer ID 1..6.
+- aart_label_map: exact normalized AART category string to integer ID 1..6. If the AART CSV has no category column, provide an explicit __all__ key mapped to one chosen harmful subclass.
+- red_file_map: RED-INSTRUCT JSON or JSONL filename stem to integer ID 1..6.
 
 Then build prompt splits:
 
