@@ -9,6 +9,7 @@ import torchaudio
 
 from .audio import fit_length, load_audio, save_audio, sha256_file
 from .psm import PSMModel
+from .losses import fuse_latents
 
 
 def load_psm_checkpoint(
@@ -69,6 +70,11 @@ def infer_one(
     protected = (clean + delta).clamp(-1.0, 1.0)
     z_clean = backend.encode_waveform(clean)
     z_protected = backend.encode_waveform(protected)
+    if psm.latent_channels != backend.latent_channels:
+        raise ValueError(
+            f"PSM latent_channels={psm.latent_channels} does not match "
+            f"AudioLDM latent_channels={backend.latent_channels}"
+        )
 
     tokens = psm.tokenize([prompt], max_length=128)
     tokens = {key: value.to(device) for key, value in tokens.items()}
@@ -91,7 +97,7 @@ def infer_one(
     elif mode in {"protected", "static_protection"}:
         selected = z_protected
     elif mode == "aide":
-        selected = z_clean + weight[:, :, None, None] * (z_protected - z_clean)
+        selected = fuse_latents(z_clean, z_protected, scalar_gate_tensor, channel_gate)
     else:
         raise ValueError("mode must be one of: aide, clean, protected")
 
