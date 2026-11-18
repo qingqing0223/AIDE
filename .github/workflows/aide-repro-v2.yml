@@ -26,6 +26,8 @@ jobs:
               ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
           print(f"AST syntax check passed for {len(files)} Python files")
           PY
+      - name: Validate shell launchers
+        run: bash -n repro_v2/scripts/*.sh
       - name: Validate JSON configuration
         run: |
           python - <<'PY'
