@@ -38,6 +38,7 @@ class AudioLDMBackend:
         self.model_name = model_name
         self.model = build_model(ckpt_path=checkpoint, model_name=model_name)
         self.model = self.model.to(self.device).eval()
+        self.model.device = self.device
         if getattr(self.model, "parameterization", "eps") != "eps":
             raise RuntimeError("The differentiable DDIM adapter currently requires epsilon parameterization.")
         for parameter in self.model.parameters():
@@ -116,7 +117,15 @@ class AudioLDMBackend:
         return latent * self.model.scale_factor
 
     def decode_latent(self, latent: torch.Tensor) -> torch.Tensor:
-        """Differentiable VAE and HiFi-GAN decode; returns [B,T] at 16 kHz."""
+        """Differentiable VAE and HiFi-GAN decode; returns [B,T] at 16 kHz.
+
+        The upstream AudioLDM style-transfer path removes the last three latent
+        time frames before its final VAE decode to avoid unstable tail frames.
+        We retain that crop while bypassing the upstream no-grad convenience API.
+        """
+        if latent.shape[2] <= 3:
+            raise ValueError(f"Latent time axis is too short to apply AudioLDM decode crop: {tuple(latent.shape)}")
+        latent = latent[:, :, :-3, :]
         mel = self.model.first_stage_model.decode(latent / self.model.scale_factor)
         mel = mel.squeeze(1).permute(0, 2, 1).contiguous()
         return self.vocoder(mel).squeeze(1)
@@ -124,7 +133,7 @@ class AudioLDMBackend:
     def encode_prompts(self, prompts: Sequence[str]) -> torch.Tensor:
         self.model.cond_stage_key = "text"
         self.clap_encoder.embed_mode = "text"
-        return self.model.get_learned_conditioning(list(prompts))
+        return self.model.get_learned_conditioning(list(prompts)).to(self.device)
 
     def _clap_text_embeddings(self, prompts: Sequence[str]) -> torch.Tensor:
         tokens = self.clap_encoder.tokenizer(list(prompts))
