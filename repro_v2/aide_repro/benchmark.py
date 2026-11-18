@@ -21,6 +21,9 @@ def run_prompt_suite(
     seed: int = 2025,
     save_paired: bool = True,
     local_files_only: bool = False,
+    mode: str = "aide",
+    hard_gate: bool = False,
+    disable_channel_gate: bool = False,
 ) -> dict:
     psm, checkpoint = load_psm_checkpoint(checkpoint_path, backend.device, local_files_only)
     prompts = [json.loads(line) for line in Path(prompt_jsonl).read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -43,7 +46,8 @@ def run_prompt_suite(
         result = infer_one(
             backend, psm, raw_path, delta_path, str(row["text"]), out_path,
             duration_seconds=duration_seconds, ddim_steps=ddim_steps, t_start=t_start,
-            guidance_scale=guidance_scale, seed=seed + index, mode="aide",
+            guidance_scale=guidance_scale, seed=seed + index, mode=mode,
+            hard_gate=hard_gate, disable_channel_gate=disable_channel_gate,
             save_paired=save_paired, local_files_only=local_files_only,
         )
         result["audio_id"] = audio_id
