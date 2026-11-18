@@ -50,6 +50,7 @@ def run_prompt_suite(
             hard_gate=hard_gate, disable_channel_gate=disable_channel_gate,
             save_paired=save_paired, local_files_only=local_files_only,
             psm_checkpoint_path=checkpoint_path,
+            label_names=checkpoint.get("label_names"),
         )
         result["audio_id"] = audio_id
         result["label_id"] = label_id
