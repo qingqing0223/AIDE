@@ -10,6 +10,7 @@ from sklearn.metrics import accuracy_score, f1_score
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
+from .audio import sha256_file
 from .losses import classification_loss, scalar_gate_calibration, generation_coupled_loss, combine_psm_losses
 from .owm import OWMProjector
 from .psm import PSMModel
@@ -197,6 +198,27 @@ class PSMTrainer:
 
         best_f1 = -1.0
         history_path = self.output_dir / "training.jsonl"
+        step_path = self.output_dir / "steps.jsonl"
+        config = {
+            "learning_rate": self.learning_rate,
+            "lambda_gate": self.lambda_gate,
+            "lambda_generation": self.lambda_generation,
+            "generation_every": self.generation_every,
+            "generation_ddim_steps": self.generation_ddim_steps,
+            "generation_t_start": self.generation_t_start,
+            "generation_guidance_scale": self.generation_guidance_scale,
+            "max_length": self.max_length,
+            "disable_generation_loss": self.disable_generation_loss,
+            "disable_channel_gate": self.disable_channel_gate,
+            "binary_risk": self.binary_risk,
+            "freeze_backbone": self.freeze_backbone,
+            "use_owm": self.owm is not None,
+            "num_labels": self.model.classifier.out_features,
+            "latent_channels": self.model.latent_channels,
+            "text_model": self.model.text_model_name,
+            "seed": self.seed,
+        }
+        (self.output_dir / "trainer_config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
         for epoch in range(1, int(epochs) + 1):
             self.model.train()
             if self.freeze_backbone:
@@ -239,6 +261,9 @@ class PSMTrainer:
                     **gen_info,
                 })
 
+            with step_path.open("a", encoding="utf-8") as stream:
+                for row in epoch_rows:
+                    stream.write(json.dumps(row, ensure_ascii=False) + "\n")
             dev_metrics = self.evaluate_classifier(dev_loader)
             train_loss = float(np.mean([r["l_total"] for r in epoch_rows])) if epoch_rows else float("nan")
             summary = {"epoch": epoch, "train_loss": train_loss, **dev_metrics}
@@ -266,4 +291,11 @@ class PSMTrainer:
 
         if self.owm is not None:
             self.owm.close()
-        return {"best_macro_f1": best_f1, "checkpoint": str((self.output_dir / "best.pt").resolve())}
+        hashes = {}
+        for name in ("best.pt", "last.pt"):
+            path = self.output_dir / name
+            if path.exists():
+                hashes[name] = sha256_file(path)
+        (self.output_dir / "checkpoint_sha256.json").write_text(json.dumps(hashes, indent=2), encoding="utf-8")
+        return {"best_macro_f1": best_f1, "checkpoint": str((self.output_dir / "best.pt").resolve()),
+                "checkpoint_sha256": hashes.get("best.pt")}
