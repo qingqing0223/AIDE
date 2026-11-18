@@ -51,6 +51,10 @@ class OWMProjector:
             self.projections[name] = 0.5 * (projection + projection.T)
             self.inputs[name].clear()
 
+    def clear_inputs(self) -> None:
+        for chunks in self.inputs.values():
+            chunks.clear()
+
     def state_dict(self) -> dict:
         return {name: value.detach().cpu() for name, value in self.projections.items()}
 
