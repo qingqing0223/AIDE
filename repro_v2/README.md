@@ -8,7 +8,7 @@ This directory is the canonical implementation path for the KSEM 2026 paper. The
 2. Stage II — Prompt Safety Module: RoBERTa text backbone, seven-way risk classifier, scalar gate, latent-channel gate, Eq. (6) gate calibration, and Eq. (7) generation-coupled CLAP loss. AudioLDM UNet, CLAP, VAE and vocoder weights remain frozen.
 3. Deployment — prompt-aware diffusion editing: Eq. (4) clean/protected latent interpolation before the DDIM reverse process, followed by the original AudioLDM VAE decoder and HiFi-GAN vocoder.
 
-The implementation also includes an OWM gradient projector, incremental classifier expansion, perturbation metrics, AudioLDM distribution evaluation, benchmark generation, and smoke tests.
+The implementation also includes an OWM gradient projector, incremental classifier expansion, perturbation metrics, AudioLDM distribution evaluation, benchmark generation, and smoke tests. See IMPLEMENTATION_AUDIT.md for the equation-to-code map, explicit assumptions and validation gates.
 
 ## Scientific boundaries and explicit engineering choices
 
