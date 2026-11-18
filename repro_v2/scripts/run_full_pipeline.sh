@@ -24,6 +24,7 @@ MODEL_NAME=$(printenv MODEL_NAME || true)
 if [ -z "$MODEL_NAME" ]; then MODEL_NAME=audioldm-s-full-v2; fi
 AUDIO_CHECKPOINT=$(printenv AUDIO_CHECKPOINT || true)
 mkdir -p "$RUN_ROOT"
+exec > >(tee -a "$RUN_ROOT/pipeline.log") 2>&1
 
 "$PYTHON" -m aide_repro.cli check-env
 "$PYTHON" -m aide_repro.cli manifest --input-root "$TRAIN_AUDIO_ROOT" --output "$RUN_ROOT/train_audio_manifest.jsonl"
