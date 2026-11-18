@@ -101,16 +101,18 @@ def build_prompt_dataset(
                 "is_harmful": 0, "source": "AudioCaps", "source_id": str(index)
             })
 
-    aart_map = {str(k).strip().lower(): int(v) for k, v in taxonomy.get("aart_label_map", {}).items()}
+    aart_map = {_norm_text(k): int(v) for k, v in taxonomy.get("aart_label_map", {}).items()}
     aart = pd.read_csv(aart_csv)
     text_col = _first_column(aart.columns, ("prompt", "Prompt", "question", "Question", "input", "text", "Text"))
     label_col = _first_column(aart.columns, ("crime", "Crime", "category", "Category", "label", "Label"))
-    if text_col is None or label_col is None:
-        raise ValueError(f"AART needs a prompt column and a category column; found {list(aart.columns)}")
+    if text_col is None:
+        raise ValueError(f"AART prompt column not found; found {list(aart.columns)}")
+    if label_col is None and "__all__" not in aart_map:
+        raise ValueError("AART has no category column. Add an explicit '__all__': 1..6 mapping to taxonomy.json.")
     unknown_aart = set()
     for index, row in aart.iterrows():
         text = str(row[text_col]).strip()
-        raw_label = str(row[label_col]).strip().lower()
+        raw_label = _norm_text(row[label_col]) if label_col is not None else "__all__"
         if not text or text.lower() == "nan":
             continue
         if raw_label not in aart_map:
@@ -135,7 +137,8 @@ def build_prompt_dataset(
     if not red_root.is_dir():
         raise FileNotFoundError(f"RED-INSTRUCT directory not found: {red_root}")
     unknown_red = []
-    for path in sorted(red_root.rglob("*.json")):
+    red_files = sorted(p for p in red_root.rglob("*") if p.is_file() and p.suffix.lower() in {".json", ".jsonl"})
+    for path in red_files:
         key = path.stem.lower()
         if key not in red_map:
             unknown_red.append(key)
@@ -143,8 +146,13 @@ def build_prompt_dataset(
         label_id = red_map[key]
         if not 1 <= label_id <= 6:
             raise ValueError(f"RED-INSTRUCT mapping for {key!r} must be 1..6.")
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        for index, text in enumerate(_extract_json_texts(payload)):
+        if path.suffix.lower() == ".jsonl":
+            payloads = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            texts = [text for payload in payloads for text in _extract_json_texts(payload)]
+        else:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            texts = _extract_json_texts(payload)
+        for index, text in enumerate(texts):
             records.append({
                 "text": text, "label_id": label_id, "label_name": labels[label_id],
                 "is_harmful": 1, "source": "RED-INSTRUCT",
