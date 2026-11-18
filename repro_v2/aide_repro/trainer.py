@@ -335,5 +335,11 @@ class PSMTrainer:
             if path.exists():
                 hashes[name] = sha256_file(path)
         (self.output_dir / "checkpoint_sha256.json").write_text(json.dumps(hashes, indent=2), encoding="utf-8")
+        artifact_hashes = {}
+        for artifact in sorted(p for p in self.output_dir.rglob("*") if p.is_file() and p.name != "artifacts_sha256.json"):
+            artifact_hashes[str(artifact.relative_to(self.output_dir))] = sha256_file(artifact)
+        (self.output_dir / "artifacts_sha256.json").write_text(json.dumps(artifact_hashes, indent=2), encoding="utf-8")
         return {"best_macro_f1": best_f1, "checkpoint": str((self.output_dir / "best.pt").resolve()),
-                "checkpoint_sha256": hashes.get("best.pt")}
+                "inference_checkpoint": str((self.output_dir / "best_inference.pt").resolve()),
+                "checkpoint_sha256": hashes.get("best.pt"),
+                "artifacts_sha256": str((self.output_dir / "artifacts_sha256.json").resolve())}
