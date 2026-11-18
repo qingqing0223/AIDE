@@ -220,6 +220,9 @@ class PSMTrainer:
             "num_labels": self.model.classifier.out_features,
             "latent_channels": self.model.latent_channels,
             "text_model": self.model.text_model_name,
+            "audio_model": self.backend.model_name if self.backend is not None else None,
+            "audio_checkpoint": self.backend.checkpoint_path if self.backend is not None else None,
+            "audio_checkpoint_sha256": self.backend.checkpoint_sha256 if self.backend is not None else None,
             "seed": self.seed,
         }
         (self.output_dir / "trainer_config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
