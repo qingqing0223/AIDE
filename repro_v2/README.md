@@ -102,6 +102,12 @@ The generation-coupled loss is enabled by default. It creates paired clean/gated
 
 If the gradient check reports a missing, zero or non-finite gradient, stop. Do not train PSM or claim Eq. (7) is active until the path passes.
 
+Before the full PSM run, execute one generation-coupled training step:
+
+    python -m aide_repro.cli train-psm --train-jsonl data/prompts/psm_train.jsonl --dev-jsonl data/prompts/psm_dev.jsonl --latent-dir runs/stage1_musan/latents --output-dir runs/psm_smoke --model-name audioldm-s-full-v2 --epochs 1 --batch-size 4 --max-steps 1 --generation-ddim-steps 2 --generation-t-start 1 --owm
+
+Confirm that steps.jsonl contains finite L_cls, L_gate and L_gen values, the checkpoint is written, and no CUDA out-of-memory or gradient errors occur. The max-steps option bounds this smoke run to one optimizer update; omit it for full training.
+
 ### Deployment
 
     python -m aide_repro.cli infer --audio runs/stage1_musan/audio/ONE_ID_raw.wav --delta runs/stage1_musan/audio/ONE_ID_delta.wav --prompt "A calm environmental sound description." --psm-checkpoint runs/stage2_psm/best_inference.pt --output runs/inference/example.wav --model-name audioldm-s-full-v2 --ddim-steps 50 --guidance-scale 2.5
