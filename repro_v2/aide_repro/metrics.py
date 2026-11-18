@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 import soundfile as sf
@@ -102,4 +104,18 @@ def evaluate_audio_distribution(
             "dependencies and retry; see repro_v2/README.md."
         ) from exc
     helper = EvaluationHelper(sampling_rate=16000, device=device, backbone="mert")
-    return helper.main(str(generated_dir), str(reference_dir), limit_num=limit_num)
+    with tempfile.TemporaryDirectory(prefix="aide_eval_") as temporary:
+        temp_root = Path(temporary)
+        gen_clean = temp_root / "generated"
+        ref_clean = temp_root / "reference"
+        gen_clean.mkdir()
+        ref_clean.mkdir()
+        for source, destination in ((Path(generated_dir), gen_clean), (Path(reference_dir), ref_clean)):
+            wavs = sorted(p for p in source.glob("*.wav") if p.is_file())
+            if limit_num is not None:
+                wavs = wavs[:limit_num]
+            for wav in wavs:
+                shutil.copy2(wav, destination / wav.name)
+        if len(list(gen_clean.glob("*.wav"))) < 2 or len(list(ref_clean.glob("*.wav"))) < 2:
+            raise RuntimeError("FD/IS/KL evaluation requires at least two WAV files in each directory.")
+        return helper.main(str(gen_clean), str(ref_clean), limit_num=limit_num)
