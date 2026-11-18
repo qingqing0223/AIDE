@@ -125,7 +125,7 @@ Suggested ablation mapping:
 - No multi-class risk modeling: train with binary-risk.
 - No generation-coupled/consistency term: train with no-generation-loss.
 - No OWM: train without owm; compare with an otherwise identical OWM run.
-- Incremental class expansion: resume an OWM-trained checkpoint with resume BASE/best.pt, expand-to NEW_CLASS_COUNT and owm; provide new JSONL labels in the appended ID range.
+- Incremental class expansion: resume an OWM-trained checkpoint with resume BASE/best.pt, expand-to NEW_CLASS_COUNT and owm; provide new JSONL labels in the appended ID range. When OWM and classifier expansion are combined, the runner freezes the pretrained RoBERTa backbone and applies the saved OWM projections to the trainable shared/head layers. This is the bounded-memory incremental implementation choice; record it in the experiment report.
 
 The paper's Table 2 includes a “w/o Consistency Loss” row, but the method equations do not define a separately named fourth loss. In this implementation that ablation disables Eq. (7) generation-coupled supervision; state this mapping in reports.
 
@@ -137,6 +137,21 @@ The paper's Table 2 includes a “w/o Consistency Loss” row, but the method eq
 - decode_latent bypasses the upstream convenience decoder's no_grad wrapper and calls the frozen VAE decoder and vocoder directly so gradients can reach the gate.
 - The old main-branch PGD ascent-sign bug is not carried forward: the new optimizer minimizes the stated objective with delta -= step_size * sign(grad).
 - The saved delta is a residual, not the target-pool waveform.
+
+## One-command orchestration
+
+After filling the exact taxonomy maps and setting the dataset paths, the complete train/test chain can be launched with the orchestration script:
+
+    export TRAIN_AUDIO_ROOT=/data/train_audio
+    export TEST_AUDIO_ROOT=/data/test_audio
+    export TARGET_POOL=/data/target_pool
+    export AUDIOCAPS_CSV=/data/AudioCaps/captions.csv
+    export AART_CSV=/data/AART/prompts.csv
+    export RED_ROOT=/data/RED-INSTRUCT
+    export RUN_ROOT=/data/aide_runs
+    bash scripts/run_full_pipeline.sh
+
+The script keeps train and test audio manifests/latents separate, runs the Stage-I gradient check before PSM training, and only proceeds when that check passes. Optional REFERENCE_BENIGN_DIR and REFERENCE_HARMFUL_DIR variables enable FD/IS/KL evaluation. Use scripts/run_inference_ablations.sh for clean, static-protection, full, hard-gate and no-channel-gate comparisons.
 
 ## Tests
 
