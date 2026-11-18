@@ -131,6 +131,8 @@ class LatentPGD:
         run_config = {
             "seed": self.seed,
             "audio_model": self.backend.model_name,
+            "audio_checkpoint": self.backend.checkpoint_path,
+            "audio_checkpoint_sha256": self.backend.checkpoint_sha256,
             "epsilon": self.epsilon,
             "step_size": self.step_size,
             "steps": self.steps,
