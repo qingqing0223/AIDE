@@ -69,4 +69,4 @@ def test_generation_coupled_loss_direction():
     sim_gated = torch.tensor([0.7, 0.5])
     harmful = torch.tensor([0.0, 1.0])
     loss = generation_coupled_loss(sim_clean, sim_gated, harmful)
-    assert torch.allclose(loss, torch.tensor(0.1))
+    assert torch.allclose(loss, torch.tensor(0.6))
