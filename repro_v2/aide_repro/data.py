@@ -179,6 +179,10 @@ def build_prompt_dataset(
     for record in records:
         group = hashlib.sha256(_norm_text(record["text"]).encode("utf-8")).hexdigest()
         by_label[record["label_id"]].append((group, record))
+    missing_ids = sorted(set(range(7)) - set(by_label))
+    if missing_ids:
+        missing_names = [labels[index] for index in missing_ids]
+        raise ValueError(f"No prompt examples mapped to required taxonomy classes: {missing_names}")
 
     rng = random.Random(seed)
     splits = {"train": [], "dev": [], "test": []}
