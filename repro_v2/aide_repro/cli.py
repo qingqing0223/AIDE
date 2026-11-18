@@ -142,7 +142,7 @@ def cmd_train_psm(args):
         old_num_labels=old_num_labels if expanded else None,
         label_names=label_names,
     )
-    result = trainer.fit(args.train_jsonl, args.dev_jsonl, epochs=args.epochs, batch_size=args.batch_size)
+    result = trainer.fit(args.train_jsonl, args.dev_jsonl, epochs=args.epochs, batch_size=args.batch_size, max_steps=args.max_steps)
     print(json.dumps(result, indent=2))
 
 
@@ -274,6 +274,7 @@ def build_parser():
     p.add_argument("--resume")
     p.add_argument("--epochs", type=int, default=10)
     p.add_argument("--batch-size", type=int, default=4)
+    p.add_argument("--max-steps", type=int)
     p.add_argument("--learning-rate", type=float, default=2e-5)
     p.add_argument("--lambda-gate", type=float, default=1.0)
     p.add_argument("--lambda-generation", type=float, default=1.0)
