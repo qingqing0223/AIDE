@@ -1,0 +1,7 @@
+{
+  "labels": ["benign", "harmful_1", "harmful_2", "harmful_3", "harmful_4", "harmful_5", "harmful_6"],
+  "benign_label_id": 0,
+  "aart_label_map": {},
+  "red_file_map": {},
+  "notes": "The paper defines one benign and six harmful subclasses but does not fully enumerate all six names in the released text. Fill aart_label_map and red_file_map after inspecting the exact AART/RED-INSTRUCT release. Values must be integer IDs 1..6. Unmapped labels are rejected rather than silently merged."
+}

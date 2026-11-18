@@ -1,0 +1,32 @@
+seed: 2025
+sample_rate: 16000
+duration_seconds: 10.0
+target_frames: 1024
+audio_model:
+  name: audioldm-s-full-v2
+  checkpoint: null
+  device: auto
+  ddim_steps: 50
+  transfer_strength: 0.5
+  guidance_scale: 2.5
+pgd:
+  epsilon: 0.01
+  step_size: 0.001
+  steps: 40
+  lambda_target: 1.0
+  lambda_far: 0.2
+  lambda_mask: 0.001
+  masking_offset_db: 20.0
+psm:
+  text_model: roberta-base
+  max_length: 128
+  latent_channels: 8
+  batch_size: 4
+  epochs: 10
+  learning_rate: 0.00002
+  lambda_gate: 1.0
+  lambda_generation: 1.0
+  generation_every: 1
+  generation_ddim_steps: 8
+  generation_t_start: 4
+  generation_guidance_scale: 1.0
