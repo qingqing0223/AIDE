@@ -1,5 +1,7 @@
 # AIDE reproducible implementation (v2)
 
+**Data and experiment environment:** see [DATA_AND_ENVIRONMENT.md](DATA_AND_ENVIRONMENT.md) for dataset sources, directory layout, preprocessing, model checkpoints, pinned software versions, setup commands and pre-run validation gates.
+
 This directory is the canonical implementation path for the KSEM 2026 paper. The original top-level scripts are retained as a historical snapshot and are not imported by this package.
 
 ## Implemented pipeline
