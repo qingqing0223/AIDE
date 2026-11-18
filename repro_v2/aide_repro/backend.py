@@ -40,8 +40,8 @@ class AudioLDMBackend:
         if checkpoint is not None and not Path(checkpoint).is_file():
             raise FileNotFoundError(f"AudioLDM checkpoint does not exist: {checkpoint}")
         self.checkpoint_path = str(Path(checkpoint).resolve()) if checkpoint else str(Path(get_metadata()[model_name]["path"]).expanduser())
-        self.checkpoint_sha256 = sha256_file(self.checkpoint_path) if Path(self.checkpoint_path).is_file() else None
         self.model = build_model(ckpt_path=checkpoint, model_name=model_name)
+        self.checkpoint_sha256 = sha256_file(self.checkpoint_path) if Path(self.checkpoint_path).is_file() else None
         self.model = self.model.to(self.device).eval()
         self.model.device = self.device
         if getattr(self.model, "parameterization", "eps") != "eps":
