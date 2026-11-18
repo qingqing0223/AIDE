@@ -6,11 +6,20 @@ import librosa
 
 class AudioLDMAdapter:
     """
-    Official AudioLDM wrapper plus a differentiable first-stage preprocessing path.
-    The official wav_to_fbank helper converts to NumPy and detaches; that path is
-    unsuitable for PGD gradients, so this module reproduces the STFT/mel geometry
-    with torch operations before calling the frozen VAE encoder.
+    AudioLDM wrapper with:
+      1) differentiable waveform -> first-stage latent encoding for PGD;
+      2) frozen CLAP text/audio conditioning;
+      3) standard DDIM generation;
+      4) controlled prompt-preserving condition injection.
+
+    The paper specifies controlled clean/protected conditioning but does not
+    disclose a particular UNet timestep intervention. Therefore the rebuild
+    exposes two explicit modes:
+      - blend_audio: direct (1-sg)c_clean + sg*c_protected;
+      - text_plus_residual: keep the text condition and add sg*(c_protected-c_clean).
+    The latter is an engineering supplement designed to preserve prompt semantics.
     """
+
     def __init__(self,checkpoint=None,model_name="audioldm-s-full",device="cuda"):
         from audioldm.pipeline import build_model
         self.device=torch.device(device if torch.cuda.is_available() else "cpu")
@@ -24,8 +33,7 @@ class AudioLDMAdapter:
         window=torch.hann_window(1024,device=x.device,dtype=x.dtype)
         spec=torch.stft(x,n_fft=1024,hop_length=160,win_length=1024,window=window,
                         center=True,pad_mode="reflect",return_complex=True)
-        mag=spec.abs()
-        mel=torch.einsum("mf,bft->bmt",self.mel_basis,mag)
+        mel=torch.einsum("mf,bft->bmt",self.mel_basis,spec.abs())
         mel=torch.log(mel.clamp_min(1e-5)).transpose(1,2).unsqueeze(1)
         if mel.shape[2]<1024: mel=F.pad(mel,(0,0,0,1024-mel.shape[2]))
         else: mel=mel[:,:,:1024,:]
@@ -40,11 +48,19 @@ class AudioLDMAdapter:
     @torch.no_grad()
     def audio_condition(self,wav):
         self.model.cond_stage_model.embed_mode="audio"
+        self.model.cond_stage_model.unconditional_prob=0.0
         x=wav.to(self.device); x=x.squeeze(1) if x.dim()==3 else x
         return self.model.cond_stage_model(x)
 
     @torch.no_grad()
+    def text_condition(self,prompts):
+        self.model.cond_stage_model.embed_mode="text"
+        self.model.cond_stage_model.unconditional_prob=0.0
+        return self.model.get_learned_conditioning(prompts)
+
+    @torch.no_grad()
     def unconditional_condition(self,batch):
+        self.model.cond_stage_model.unconditional_prob=0.0
         return self.model.cond_stage_model.get_unconditional_condition(batch)
 
     @torch.no_grad()
@@ -56,7 +72,8 @@ class AudioLDMAdapter:
     def ddim_schedule(self,steps=50,eta=1.0):
         alpha=self.model.alphas_cumprod.detach().float().cpu().numpy()
         idx=np.linspace(0,len(alpha)-1,steps,dtype=int)
-        a=torch.tensor(alpha[idx],device=self.device); ap=torch.tensor(np.r_[1.0,alpha[idx[:-1]]],device=self.device)
+        a=torch.tensor(alpha[idx],device=self.device)
+        ap=torch.tensor(np.r_[1.0,alpha[idx[:-1]]],device=self.device)
         sigma=eta*torch.sqrt((1-ap)/(1-a)*(1-a/ap))
         return torch.tensor(idx,device=self.device),a,ap,sigma
 
@@ -75,3 +92,38 @@ class AudioLDMAdapter:
             direction=torch.sqrt(torch.clamp(1-prev-ss**2,min=0))*eps
             x=torch.sqrt(prev)*x0+direction
         return self.decode(x)
+
+    @torch.no_grad()
+    def generate_controlled(self,prompt,clean_wav,protected_wav,scalar_gate,channel_gate,
+                            steps=50,guidance_scale=2.5,seed=42,
+                            mode="text_plus_residual",rho=1.0):
+        """
+        Controlled generation.
+
+        blend_audio:
+            c = (1-s*g)c_clean + (s*g)c_protected
+
+        text_plus_residual:
+            c = c_text + rho*(s*g)*(c_protected-c_clean)
+
+        text_plus_residual is the default supplement because it preserves the
+        prompt semantics of the original AudioLDM editing pipeline while exposing
+        the learned protection direction.
+        """
+        cc=self.audio_condition(clean_wav)
+        cp=self.audio_condition(protected_wav)
+        s=scalar_gate.to(self.device)
+        g=channel_gate.to(self.device)
+        if g.dim()==2: g=g.unsqueeze(1)
+        while s.dim()<cp.dim(): s=s.unsqueeze(-1)
+        gate=(s*g).clamp(0,1)
+
+        if mode=="blend_audio":
+            cond=(1-gate)*cc+gate*cp
+        elif mode=="text_plus_residual":
+            ct=self.text_condition([prompt]*clean_wav.shape[0])
+            cond=ct+rho*gate*(cp-cc)
+        else:
+            raise ValueError(f"unknown control mode: {mode}")
+
+        return self.generate(cond,steps=steps,guidance_scale=guidance_scale,seed=seed)
