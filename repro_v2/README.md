@@ -100,7 +100,7 @@ If the gradient check reports a missing, zero or non-finite gradient, stop. Do n
 
 ### Deployment
 
-    python -m aide_repro.cli infer --audio runs/stage1_musan/audio/ONE_ID_raw.wav --delta runs/stage1_musan/audio/ONE_ID_delta.wav --prompt "A calm environmental sound description." --psm-checkpoint runs/stage2_psm/best.pt --output runs/inference/example.wav --model-name audioldm-s-full-v2 --ddim-steps 50 --guidance-scale 2.5
+    python -m aide_repro.cli infer --audio runs/stage1_musan/audio/ONE_ID_raw.wav --delta runs/stage1_musan/audio/ONE_ID_delta.wav --prompt "A calm environmental sound description." --psm-checkpoint runs/stage2_psm/best_inference.pt --output runs/inference/example.wav --model-name audioldm-s-full-v2 --ddim-steps 50 --guidance-scale 2.5
 
 Infer writes a JSON sidecar with the predicted category distribution, scalar gate, channel gate, seed and sampler settings. By default it also writes paired clean/protected/gated generations using the same initial noise.
 
@@ -108,7 +108,7 @@ Infer writes a JSON sidecar with the predicted category distribution, scalar gat
 
 The evaluation prompt JSONL must contain audio_id, text, label_id and is_harmful. audio_id links each prompt to a Stage-I source audio.
 
-    python -m aide_repro.cli suite --prompt-jsonl data/prompts/psm_test_with_audio_ids.jsonl --pgd-audio-dir runs/stage1_musan/audio --psm-checkpoint runs/stage2_psm/best.pt --output-dir runs/test_suite --ddim-steps 50 --guidance-scale 2.5
+    python -m aide_repro.cli suite --prompt-jsonl data/prompts/psm_test_with_audio_ids.jsonl --pgd-audio-dir runs/stage1_musan/audio --psm-checkpoint runs/stage2_psm/best_inference.pt --output-dir runs/test_suite --ddim-steps 50 --guidance-scale 2.5
 
 ## Metrics and ablations
 
