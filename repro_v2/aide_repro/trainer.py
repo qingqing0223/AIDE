@@ -94,6 +94,7 @@ class PSMTrainer:
         owm_state: dict | None = None,
         optimizer_state: dict | None = None,
         initial_global_step: int = 0,
+        freeze_backbone: bool = False,
     ):
         self.model = model
         self.backend = backend
@@ -102,6 +103,11 @@ class PSMTrainer:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.device = torch.device(device)
         self.model.to(self.device)
+        self.freeze_backbone = bool(freeze_backbone)
+        if self.freeze_backbone:
+            for parameter in self.model.backbone.parameters():
+                parameter.requires_grad_(False)
+            self.model.backbone.eval()
         self.learning_rate = float(learning_rate)
         self.lambda_gate = float(lambda_gate)
         self.lambda_generation = float(lambda_generation)
@@ -193,6 +199,8 @@ class PSMTrainer:
         history_path = self.output_dir / "training.jsonl"
         for epoch in range(1, int(epochs) + 1):
             self.model.train()
+            if self.freeze_backbone:
+                self.model.backbone.eval()
             epoch_rows = []
             for batch_index, batch in enumerate(train_loader):
                 self.global_step += 1
@@ -246,6 +254,7 @@ class PSMTrainer:
                 "metrics": summary,
                 "binary_risk": self.binary_risk,
                 "owm_enabled": self.owm is not None,
+                "backbone_frozen": self.freeze_backbone,
                 "owm_state": self.owm.state_dict() if self.owm is not None else None,
                 "optimizer_state": self.optimizer.state_dict(),
             }
