@@ -11,7 +11,7 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 from .audio import sha256_file
-from .losses import classification_loss, scalar_gate_calibration, generation_coupled_loss, combine_psm_losses
+from .losses import classification_loss, scalar_gate_calibration, generation_coupled_loss, combine_psm_losses, fuse_latents
 from .owm import OWMProjector
 from .psm import PSMModel
 
@@ -104,6 +104,11 @@ class PSMTrainer:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.device = torch.device(device)
         self.model.to(self.device)
+        if backend is not None and self.model.latent_channels != backend.latent_channels:
+            raise ValueError(
+                f"PSM latent_channels={self.model.latent_channels} does not match "
+                f"AudioLDM latent_channels={backend.latent_channels}"
+            )
         self.freeze_backbone = bool(freeze_backbone)
         if self.freeze_backbone:
             for parameter in self.model.backbone.parameters():
@@ -134,8 +139,7 @@ class PSMTrainer:
         channel = outputs["channel_gate"]
         if self.disable_channel_gate:
             channel = torch.ones_like(channel)
-        weight = scalar.unsqueeze(1) * channel
-        gated_latent = z_clean + weight[:, :, None, None] * (z_protected - z_clean)
+        gated_latent = fuse_latents(z_clean, z_protected, scalar, channel)
         shared_noise = torch.randn_like(z_clean)
         clean_audio = self.backend.generate_from_latent(
             z_clean, batch["texts"], ddim_steps=self.generation_ddim_steps,
