@@ -126,6 +126,7 @@ def cmd_train_psm(args):
         owm_state=resume.get("owm_state") if resume else None,
         optimizer_state=resume.get("optimizer_state") if resume and not expanded else None,
         initial_global_step=resume.get("global_step", 0) if resume else 0,
+        freeze_backbone=args.freeze_backbone or bool(expanded and args.owm),
     )
     result = trainer.fit(args.train_jsonl, args.dev_jsonl, epochs=args.epochs, batch_size=args.batch_size)
     print(json.dumps(result, indent=2))
@@ -269,6 +270,7 @@ def build_parser():
     p.add_argument("--disable-channel-gate", action="store_true")
     p.add_argument("--no-generation-loss", action="store_true")
     p.add_argument("--owm", action="store_true")
+    p.add_argument("--freeze-backbone", action="store_true")
     p.add_argument("--local-files-only", action="store_true")
     p.add_argument("--seed", type=int, default=2025)
     p.set_defaults(func=cmd_train_psm)
