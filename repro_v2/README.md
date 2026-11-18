@@ -159,7 +159,7 @@ After filling the exact taxonomy maps and setting the dataset paths, the complet
     export RUN_ROOT=/data/aide_runs
     bash scripts/run_full_pipeline.sh
 
-The script keeps train and test audio manifests/latents separate, runs the Stage-I gradient check before PSM training, and only proceeds when that check passes. Optional REFERENCE_BENIGN_DIR and REFERENCE_HARMFUL_DIR variables enable FD/IS/KL evaluation. Use scripts/run_inference_ablations.sh for clean, static-protection, full, hard-gate and no-channel-gate comparisons.
+The script keeps train and test audio manifests/latents separate, runs the Stage-I gradient check before PSM training, and only proceeds when that check passes. Optional REFERENCE_BENIGN_DIR and REFERENCE_HARMFUL_DIR variables enable FD/IS/KL evaluation. Use scripts/run_inference_ablations.sh for clean, static-protection, full, hard-gate and no-channel-gate comparisons. Set FULL_PSM_CHECKPOINT to the generated best_inference.pt file; optional binary/no-generation/no-OWM checkpoints can be supplied through the corresponding environment variables in that script.
 
 ## Tests
 
