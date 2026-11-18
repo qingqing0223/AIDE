@@ -125,7 +125,7 @@ Suggested ablation mapping:
 - No multi-class risk modeling: train with binary-risk.
 - No generation-coupled/consistency term: train with no-generation-loss.
 - No OWM: train without owm; compare with an otherwise identical OWM run.
-- Incremental class expansion: resume an OWM-trained checkpoint with resume BASE/best.pt, expand-to NEW_CLASS_COUNT and owm; provide new JSONL labels in the appended ID range. When OWM and classifier expansion are combined, the runner freezes the pretrained RoBERTa backbone and applies the saved OWM projections to the trainable shared/head layers. This is the bounded-memory incremental implementation choice; record it in the experiment report.
+- Incremental class expansion: resume an OWM-trained checkpoint with resume BASE/best.pt, expand-to NEW_CLASS_COUNT and owm; provide new JSONL labels in the appended ID range. When OWM and classifier expansion are combined, the runner freezes the pretrained RoBERTa backbone and applies the saved OWM projections to the trainable shared/head layers. This is the bounded-memory incremental implementation choice; record it in the experiment report. Include old-class and new-class examples in the dev JSONL to obtain separate old_class_mean_f1 and new_class_mean_f1 values.
 
 The paper's Table 2 includes a “w/o Consistency Loss” row, but the method equations do not define a separately named fourth loss. In this implementation that ablation disables Eq. (7) generation-coupled supervision; state this mapping in reports.
 
