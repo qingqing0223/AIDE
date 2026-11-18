@@ -106,6 +106,7 @@ def cmd_train_psm(args):
     )
     if resume:
         model.load_state_dict(resume["state_dict"], strict=True)
+    old_num_labels = model.classifier.out_features
     expanded = bool(args.expand_to and args.expand_to > model.classifier.out_features)
     if expanded:
         model.expand_classifier(args.expand_to)
@@ -127,6 +128,7 @@ def cmd_train_psm(args):
         optimizer_state=resume.get("optimizer_state") if resume and not expanded else None,
         initial_global_step=resume.get("global_step", 0) if resume else 0,
         freeze_backbone=args.freeze_backbone or bool(expanded and args.owm),
+        old_num_labels=old_num_labels if expanded else None,
     )
     result = trainer.fit(args.train_jsonl, args.dev_jsonl, epochs=args.epochs, batch_size=args.batch_size)
     print(json.dumps(result, indent=2))
