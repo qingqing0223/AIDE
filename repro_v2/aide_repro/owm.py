@@ -51,6 +51,15 @@ class OWMProjector:
             self.projections[name] = 0.5 * (projection + projection.T)
             self.inputs[name].clear()
 
+    def state_dict(self) -> dict:
+        return {name: value.detach().cpu() for name, value in self.projections.items()}
+
+    @torch.no_grad()
+    def load_state_dict(self, state: dict) -> None:
+        for name, value in state.items():
+            if name in self.projections and tuple(value.shape) == tuple(self.projections[name].shape):
+                self.projections[name] = value.to(self.projections[name].device, dtype=torch.float32)
+
     def close(self) -> None:
         for handle in self.handles:
             handle.remove()
