@@ -97,6 +97,7 @@ class PSMTrainer:
         initial_global_step: int = 0,
         freeze_backbone: bool = False,
         old_num_labels: int | None = None,
+        label_names: list[str] | None = None,
     ):
         self.model = model
         self.backend = backend
@@ -112,6 +113,9 @@ class PSMTrainer:
             )
         self.freeze_backbone = bool(freeze_backbone)
         self.old_num_labels = int(old_num_labels) if old_num_labels is not None else None
+        self.label_names = list(label_names) if label_names else [f"class_{i}" for i in range(self.model.classifier.out_features)]
+        if len(self.label_names) != self.model.classifier.out_features:
+            raise ValueError("label_names length must match PSM classifier output dimension.")
         if self.freeze_backbone:
             for parameter in self.model.backbone.parameters():
                 parameter.requires_grad_(False)
@@ -228,6 +232,7 @@ class PSMTrainer:
             "binary_risk": self.binary_risk,
             "freeze_backbone": self.freeze_backbone,
             "old_num_labels": self.old_num_labels,
+            "label_names": self.label_names,
             "use_owm": self.owm is not None,
             "num_labels": self.model.classifier.out_features,
             "latent_channels": self.model.latent_channels,
@@ -300,6 +305,7 @@ class PSMTrainer:
                 "owm_enabled": self.owm is not None,
                 "backbone_frozen": self.freeze_backbone,
                 "old_num_labels": self.old_num_labels,
+                "label_names": self.label_names,
                 "owm_state": self.owm.state_dict() if self.owm is not None else None,
                 "optimizer_state": self.optimizer.state_dict(),
             }
