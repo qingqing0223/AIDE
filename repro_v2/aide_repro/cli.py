@@ -142,6 +142,7 @@ def cmd_infer(args):
         guidance_scale=args.guidance_scale, seed=args.seed, mode=args.mode,
         hard_gate=args.hard_gate, disable_channel_gate=args.disable_channel_gate,
         save_paired=not args.no_paired, local_files_only=args.local_files_only,
+        psm_checkpoint_path=args.psm_checkpoint,
     )
     print(json.dumps(result, indent=2))
 
