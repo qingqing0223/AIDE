@@ -1,0 +1,21 @@
+name: aide-ksem
+channels: [pytorch, nvidia, conda-forge]
+dependencies:
+  - python=3.10
+  - pytorch
+  - pytorch-cuda=12.1
+  - torchaudio
+  - numpy
+  - scipy
+  - librosa
+  - soundfile
+  - pyyaml
+  - pandas
+  - scikit-learn
+  - tqdm
+  - pytest
+  - pip
+  - pip:
+      - transformers>=4.38
+      - accelerate>=0.27
+      - einops>=0.7
