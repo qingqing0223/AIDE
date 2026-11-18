@@ -14,6 +14,7 @@ from aide.psm import (
     PromptDataset,
     collate_prompts,
     psm_loss,
+    evaluate_psm,
     save_psm_checkpoint,
 )
 
