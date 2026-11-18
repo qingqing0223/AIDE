@@ -61,6 +61,7 @@ def infer_one(
     save_paired: bool = True,
     local_files_only: bool = False,
     psm_checkpoint_path: str | Path | None = None,
+    label_names: list[str] | None = None,
 ) -> dict:
     device = backend.device
     clean = load_audio(audio_path, duration_seconds=duration_seconds).to(device)
@@ -125,6 +126,8 @@ def infer_one(
         "prompt": prompt,
         "mode": mode,
         "predicted_label_id": predicted_label,
+        "predicted_label_name": label_names[predicted_label] if label_names and predicted_label < len(label_names) else None,
+        "label_names": label_names,
         "class_probabilities": probabilities[0].detach().cpu().tolist(),
         "harmful_probability": harmful_probability,
         "scalar_gate": scalar_gate,
