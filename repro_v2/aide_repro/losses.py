@@ -49,3 +49,26 @@ def combine_psm_losses(
     lambda_generation: float = 1.0,
 ) -> torch.Tensor:
     return l_cls + float(lambda_gate) * l_gate + float(lambda_generation) * l_gen
+
+
+def fuse_latents(
+    z_clean: torch.Tensor,
+    z_protected: torch.Tensor,
+    scalar_gate: torch.Tensor,
+    channel_gate: torch.Tensor,
+) -> torch.Tensor:
+    """Apply paper Eq. (4) with strict batch/channel/spatial shape checks."""
+    if z_clean.shape != z_protected.shape:
+        raise ValueError(f"Clean/protected latent shape mismatch: {tuple(z_clean.shape)} vs {tuple(z_protected.shape)}")
+    if z_clean.ndim != 4:
+        raise ValueError(f"Expected latent [B,C,H,W], got {tuple(z_clean.shape)}")
+    batch, channels = z_clean.shape[:2]
+    scalar_gate = scalar_gate.reshape(-1)
+    if scalar_gate.shape[0] != batch:
+        raise ValueError(f"Scalar gate batch mismatch: {scalar_gate.shape[0]} vs {batch}")
+    if channel_gate.shape != (batch, channels):
+        raise ValueError(
+            f"Channel gate must be [B,C]=[{batch},{channels}], got {tuple(channel_gate.shape)}"
+        )
+    weight = scalar_gate[:, None] * channel_gate
+    return z_clean + weight[:, :, None, None] * (z_protected - z_clean)
