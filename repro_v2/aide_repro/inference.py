@@ -7,7 +7,7 @@ import soundfile as sf
 import torch
 import torchaudio
 
-from .audio import fit_length, load_audio, save_audio
+from .audio import fit_length, load_audio, save_audio, sha256_file
 from .psm import PSMModel
 
 
@@ -59,6 +59,7 @@ def infer_one(
     disable_channel_gate: bool = False,
     save_paired: bool = True,
     local_files_only: bool = False,
+    psm_checkpoint_path: str | Path | None = None,
 ) -> dict:
     device = backend.device
     clean = load_audio(audio_path, duration_seconds=duration_seconds).to(device)
@@ -105,13 +106,21 @@ def infer_one(
 
     meta = {
         "audio_path": str(Path(audio_path).resolve()),
+        "audio_sha256": sha256_file(audio_path),
         "delta_path": str(Path(delta_path).resolve()),
+        "delta_sha256": sha256_file(delta_path),
+        "psm_checkpoint": str(Path(psm_checkpoint_path).resolve()) if psm_checkpoint_path else None,
+        "psm_checkpoint_sha256": sha256_file(psm_checkpoint_path) if psm_checkpoint_path else None,
+        "audio_model": backend.model_name,
+        "sample_rate": backend.sample_rate,
+        "latent_shape": list(z_clean.shape),
         "prompt": prompt,
         "mode": mode,
         "predicted_label_id": predicted_label,
         "class_probabilities": probabilities[0].detach().cpu().tolist(),
         "harmful_probability": harmful_probability,
         "scalar_gate": scalar_gate,
+        "effective_scalar_gate": float(scalar_gate_tensor.item()),
         "channel_gate": channel_gate[0].detach().cpu().tolist(),
         "ddim_steps": int(ddim_steps),
         "t_start": int(t_start if t_start is not None else max(1, round(ddim_steps * 0.5))),
