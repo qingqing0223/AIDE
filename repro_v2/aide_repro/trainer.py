@@ -92,6 +92,8 @@ class PSMTrainer:
         binary_risk: bool = False,
         seed: int = 2025,
         owm_state: dict | None = None,
+        optimizer_state: dict | None = None,
+        initial_global_step: int = 0,
     ):
         self.model = model
         self.backend = backend
@@ -113,10 +115,12 @@ class PSMTrainer:
         self.binary_risk = bool(binary_risk)
         self.seed = int(seed)
         self.optimizer = AdamW(self.model.parameters(), lr=self.learning_rate)
+        if optimizer_state:
+            self.optimizer.load_state_dict(optimizer_state)
         self.owm = OWMProjector(self.model) if use_owm else None
         if self.owm is not None and owm_state:
             self.owm.load_state_dict(owm_state)
-        self.global_step = 0
+        self.global_step = int(initial_global_step)
 
     def _forward_generation_loss(self, outputs, batch, z_clean, z_protected):
         scalar = outputs["scalar_gate"]
@@ -145,6 +149,8 @@ class PSMTrainer:
 
     @torch.no_grad()
     def evaluate_classifier(self, loader):
+        if self.owm is not None:
+            self.owm.clear_inputs()
         self.model.eval()
         labels, predictions, gates, harmful = [], [], [], []
         for batch in loader:
@@ -159,6 +165,8 @@ class PSMTrainer:
             predictions.extend(output["logits"].argmax(-1).cpu().tolist())
             gates.extend(output["scalar_gate"].cpu().tolist())
             harmful.extend(h.cpu().tolist())
+        if self.owm is not None:
+            self.owm.clear_inputs()
         return {
             "accuracy": float(accuracy_score(labels, predictions)),
             "macro_f1": float(f1_score(labels, predictions, average="macro", zero_division=0)),
@@ -239,6 +247,7 @@ class PSMTrainer:
                 "binary_risk": self.binary_risk,
                 "owm_enabled": self.owm is not None,
                 "owm_state": self.owm.state_dict() if self.owm is not None else None,
+                "optimizer_state": self.optimizer.state_dict(),
             }
             torch.save(checkpoint, self.output_dir / "last.pt")
             if dev_metrics["macro_f1"] > best_f1:
