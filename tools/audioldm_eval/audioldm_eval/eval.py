@@ -14,7 +14,10 @@ from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
 from audioldm_eval.feature_extractors.panns import Cnn14
 from audioldm_eval.audio.tools import save_pickle, load_pickle, write_json, load_json
-from ssr_eval.metrics import AudioMetrics
+try:
+    from ssr_eval.metrics import AudioMetrics
+except ImportError:
+    AudioMetrics = None
 import audioldm_eval.audio as Audio
 
 class EvaluationHelper:
