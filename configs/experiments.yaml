@@ -1,0 +1,12 @@
+experiments:
+  main: [clean, pgd_only, aide]
+  ablations:
+    - no_target_term
+    - no_clean_separation
+    - no_masking
+    - scalar_gate_only
+    - channel_gate_only
+    - no_psm
+  control_modes:
+    - text_plus_residual
+    - blend_audio
