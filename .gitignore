@@ -1,0 +1,9 @@
+# Local upstream dependencies and model artifacts
+external/
+model_cache/
+*.ckpt
+*.pth
+*.pt
+__pycache__/
+*.py[cod]
+.DS_Store
