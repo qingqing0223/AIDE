@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Sequence
 
 import torch
 import torch.nn.functional as F
 import torchaudio
 
-from .audio import fit_length
+from .audio import fit_length, sha256_file
 
 
 class AudioLDMBackend:
@@ -25,7 +26,7 @@ class AudioLDMBackend:
     ) -> None:
         try:
             from audioldm import build_model
-            from audioldm.utils import default_audioldm_config
+            from audioldm.utils import default_audioldm_config, get_metadata
         except Exception as exc:
             raise RuntimeError(
                 "Original AudioLDM is not installed. Follow repro_v2/README.md "
@@ -36,6 +37,10 @@ class AudioLDMBackend:
             device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(device)
         self.model_name = model_name
+        if checkpoint is not None and not Path(checkpoint).is_file():
+            raise FileNotFoundError(f"AudioLDM checkpoint does not exist: {checkpoint}")
+        self.checkpoint_path = str(Path(checkpoint).resolve()) if checkpoint else str(Path(get_metadata()[model_name]["path"]).expanduser())
+        self.checkpoint_sha256 = sha256_file(self.checkpoint_path) if Path(self.checkpoint_path).is_file() else None
         self.model = build_model(ckpt_path=checkpoint, model_name=model_name)
         self.model = self.model.to(self.device).eval()
         self.model.device = self.device
