@@ -50,4 +50,6 @@ jobs:
           pip install numpy==1.26.4 soundfile pytest
       - name: Run unit tests
         working-directory: repro_v2
-        run: pytest -q
+        env:
+          PYTHONPATH: .
+        run: python -m pytest -q
