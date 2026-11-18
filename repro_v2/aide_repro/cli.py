@@ -11,7 +11,7 @@ import torch
 from .audio import load_audio
 from .backend import AudioLDMBackend
 from .benchmark import run_prompt_suite
-from .data import build_audio_manifest, build_prompt_dataset
+from .data import build_audio_manifest, build_prompt_dataset, attach_audio_ids
 from .inference import infer_one, load_psm_checkpoint
 from .metrics import evaluate_audio_distribution, evaluate_perturbation_pairs, evaluate_prompt_clap
 from .pgd import LatentPGD
@@ -63,6 +63,11 @@ def cmd_build_prompts(args):
         args.output_dir, seed=args.seed
     )
     print(json.dumps(result, indent=2))
+
+
+def cmd_attach_audio_ids(args):
+    count = attach_audio_ids(args.prompt_jsonl, args.audio_manifest, args.output, args.seed)
+    print(json.dumps({"num_prompts": count, "output": str(Path(args.output).resolve())}, indent=2))
 
 
 def cmd_pgd(args):
@@ -149,6 +154,8 @@ def cmd_suite(args):
         ddim_steps=args.ddim_steps, t_start=args.t_start,
         guidance_scale=args.guidance_scale, seed=args.seed,
         save_paired=not args.no_paired, local_files_only=args.local_files_only,
+        mode=args.mode, hard_gate=args.hard_gate,
+        disable_channel_gate=args.disable_channel_gate,
     )
     print(json.dumps(result, indent=2))
 
@@ -208,6 +215,13 @@ def build_parser():
     p.add_argument("--output-dir", required=True)
     p.add_argument("--seed", type=int, default=2025)
     p.set_defaults(func=cmd_build_prompts)
+
+    p = sub.add_parser("attach-audio-ids")
+    p.add_argument("--prompt-jsonl", required=True)
+    p.add_argument("--audio-manifest", required=True)
+    p.add_argument("--output", required=True)
+    p.add_argument("--seed", type=int, default=2025)
+    p.set_defaults(func=cmd_attach_audio_ids)
 
     p = sub.add_parser("pgd")
     p.add_argument("--manifest", required=True)
@@ -293,6 +307,9 @@ def build_parser():
     p.add_argument("--t-start", type=int)
     p.add_argument("--guidance-scale", type=float, default=2.5)
     p.add_argument("--no-paired", action="store_true")
+    p.add_argument("--mode", choices=["aide", "clean", "protected"], default="aide")
+    p.add_argument("--hard-gate", action="store_true")
+    p.add_argument("--disable-channel-gate", action="store_true")
     p.add_argument("--local-files-only", action="store_true")
     p.add_argument("--seed", type=int, default=2025)
     p.set_defaults(func=cmd_suite)
