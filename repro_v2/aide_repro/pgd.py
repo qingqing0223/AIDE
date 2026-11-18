@@ -127,6 +127,21 @@ class LatentPGD:
         (out / "latents").mkdir(parents=True, exist_ok=True)
         metric_rows = []
         target_rows = []
+        history_rows = []
+        run_config = {
+            "seed": self.seed,
+            "epsilon": self.epsilon,
+            "step_size": self.step_size,
+            "steps": self.steps,
+            "lambda_target": self.lambda_target,
+            "lambda_far": self.lambda_far,
+            "lambda_mask": self.lambda_mask,
+            "masking_offset_db": self.masking_offset_db,
+            "duration_seconds": duration_seconds,
+            "target_root": str(Path(target_root).resolve()),
+            "target_pool_size": len(targets),
+            "manifest": str(Path(manifest_jsonl).resolve()),
+        }
         for row in manifest:
             audio_id = row["audio_id"]
             clean = load_audio(row["path"], duration_seconds=duration_seconds).to(self.backend.device)
@@ -148,8 +163,29 @@ class LatentPGD:
                 **{k: v for k, v in result["metrics"].items() if k != "history"},
             }
             metric_rows.append(metrics)
-            target_rows.append({"audio_id": audio_id, "target_path": str(target_path.resolve()), "target_sha256": metrics["target_sha256"]})
-        from .audio import write_jsonl
+            for item in result["metrics"]["history"]:
+                history_rows.append({"audio_id": audio_id, **item})
+            target_rows.append({
+                "audio_id": audio_id,
+                "target_path": str(target_path.resolve()),
+                "target_sha256": metrics["target_sha256"],
+                "seed": self.seed,
+            })
+            print(json.dumps(metrics, ensure_ascii=False))
+        from .audio import write_jsonl, sha256_file
         write_jsonl(out / "pgd_metrics.jsonl", metric_rows)
+        write_jsonl(out / "pgd_history.jsonl", history_rows)
         write_jsonl(out / "target_manifest.jsonl", target_rows)
-        return {"num_samples": len(metric_rows), "output_dir": str(out.resolve())}
+        (out / "run_config.json").write_text(json.dumps(run_config, indent=2), encoding="utf-8")
+        hashes = {}
+        for artifact in sorted(p for p in out.rglob("*") if p.is_file()):
+            hashes[str(artifact.relative_to(out))] = sha256_file(artifact)
+        (out / "artifacts_sha256.json").write_text(json.dumps(hashes, indent=2), encoding="utf-8")
+        summary = {"num_samples": len(metric_rows), "output_dir": str(out.resolve()),
+                   "metrics": {
+                       "snr_db_mean": sum(x["snr_db"] for x in metric_rows) / max(1, len(metric_rows)),
+                       "lsd_db_mean": sum(x["lsd_db"] for x in metric_rows) / max(1, len(metric_rows)),
+                       "linf_max": max((x["linf"] for x in metric_rows), default=0.0),
+                   }}
+        (out / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        return summary
