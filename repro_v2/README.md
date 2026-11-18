@@ -24,7 +24,11 @@ Do not describe an engineering proxy or an unverified run as an original paper i
 
 ## Environment
 
-The paper reports Python 3.10, PyTorch 2.1.0, torchaudio 2.1.0, CUDA 12.1 and an NVIDIA A100. Use the matching PyTorch wheel for your CUDA host.
+The paper reports Python 3.10, PyTorch 2.1.0, torchaudio 2.1.0, CUDA 12.1 and an NVIDIA A100. Use the matching PyTorch wheel for your CUDA host. A pinned installer is provided:
+
+    bash scripts/install_env.sh
+
+For CPU-only hosts, set TORCH_INDEX_URL to https://download.pytorch.org/whl/cpu before running the installer. The manual equivalent is:
 
     conda create -n aide python=3.10 -y
     conda activate aide
